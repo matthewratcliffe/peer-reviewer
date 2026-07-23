@@ -416,9 +416,27 @@ jobs:
       - name: Install VSSDK component
         shell: pwsh
         run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           $installerPath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe"
-          $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
-          & $installerPath modify --installPath "$vsPath" --add Microsoft.VisualStudio.Component.VSSDK --quiet --norestart --wait
+          $vsPath = & $vswhere -latest -property installationPath
+          Write-Host "VS installation path: $vsPath"
+
+          $before = & $vswhere -latest -requires Microsoft.VisualStudio.Component.VSSDK -property installationPath
+          Write-Host "VSSDK present before install: '$before'"
+
+          $proc = Start-Process -FilePath $installerPath -ArgumentList @(
+            "modify", "--installPath", "`"$vsPath`"",
+            "--add", "Microsoft.VisualStudio.Component.VSSDK",
+            "--quiet", "--norestart", "--wait"
+          ) -PassThru -Wait
+          Write-Host "vs_installer exit code: $($proc.ExitCode)"
+
+          $after = & $vswhere -latest -requires Microsoft.VisualStudio.Component.VSSDK -property installationPath
+          Write-Host "VSSDK present after install: '$after'"
+          if (-not $after) {
+            Write-Error "VSSDK component still not present after install attempt"
+            exit 1
+          }
 
       - name: Set version
         shell: pwsh
@@ -440,7 +458,14 @@ jobs:
 
       - name: Build VSIX
         working-directory: ides/visual-studio
-        run: msbuild PeerReviewer.sln /p:Configuration=Release /p:DeployExtension=false
+        run: msbuild PeerReviewer.sln /p:Configuration=Release /p:DeployExtension=false /v:normal /bl:msbuild.binlog
+
+      - name: Upload MSBuild binlog
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: msbuild-binlog
+          path: ides/visual-studio/msbuild.binlog
 
       - name: Find VSIX
         id: find-vsix
@@ -448,6 +473,8 @@ jobs:
         run: |
           $vsix = Get-ChildItem -Path "ides/visual-studio" -Recurse -Filter "*.vsix" | Select-Object -First 1
           if (-not $vsix) {
+            Write-Host "No .vsix found. Listing PeerReviewer bin/obj output for diagnosis:"
+            Get-ChildItem -Path "ides/visual-studio/PeerReviewer/bin","ides/visual-studio/PeerReviewer/obj" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName
             Write-Error "No .vsix file found after build"
             exit 1
           }
