@@ -6,10 +6,30 @@ on:
       - 'v*'
   workflow_dispatch:
     inputs:
-      publish:
-        description: 'Publish to stores (yes/no)'
+      publish_vscode:
+        description: 'Publish VS Code extension'
         required: true
         default: 'no'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+      publish_rider:
+        description: 'Publish Rider plugin'
+        required: true
+        default: 'no'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+      publish_vs:
+        description: 'Publish Visual Studio extension'
+        required: true
+        default: 'no'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
 
 env:
   NODE_VERSION: '22'
@@ -68,6 +88,9 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────
   publish-vscode:
     needs: build-service
+    if: >-
+      startsWith(github.ref, 'refs/tags/v') ||
+      github.event.inputs.publish_vscode == 'yes'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -108,7 +131,6 @@ jobs:
           path: ides/vscode/review-notes.vsix
 
       - name: Azure login (OIDC)
-        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -116,12 +138,10 @@ jobs:
           allow-no-subscriptions: true
 
       - name: Publish to VS Code Marketplace
-        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
         working-directory: ides/vscode
         run: npx @vscode/vsce publish --azure-credential
 
       - name: Publish to Open VSX Registry
-        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
         working-directory: ides/vscode
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
@@ -146,6 +166,9 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────
   publish-rider:
     needs: build-service
+    if: >-
+      startsWith(github.ref, 'refs/tags/v') ||
+      github.event.inputs.publish_rider == 'yes'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -188,7 +211,6 @@ jobs:
           path: ${{ steps.find-zip.outputs.path }}
 
       - name: Publish to JetBrains Marketplace
-        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
         working-directory: ides/rider
         env:
           JETBRAINS_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
@@ -213,6 +235,9 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────
   publish-visual-studio:
     needs: build-service
+    if: >-
+      startsWith(github.ref, 'refs/tags/v') ||
+      github.event.inputs.publish_vs == 'yes'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -256,7 +281,6 @@ jobs:
       # SignPath submits the artifact, signs it with a trusted CA certificate,
       # and returns the signed version. No certificate purchase needed.
       - name: Sign VSIX with SignPath
-        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
         uses: signpath/github-action-submit-signing-request@v1
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
@@ -269,21 +293,12 @@ jobs:
           output-artifact-directory: signed-vsix
 
       - name: Upload signed VSIX
-        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
         uses: actions/upload-artifact@v4
         with:
           name: visual-studio-vsix
           path: signed-vsix/*.vsix
 
-      - name: Upload unsigned as final (if not publishing)
-        if: "!(startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes')"
-        uses: actions/upload-artifact@v4
-        with:
-          name: visual-studio-vsix
-          path: ${{ steps.find-vsix.outputs.path }}
-
       - name: Publish to Visual Studio Marketplace
-        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
         shell: pwsh
         env:
           VS_MARKETPLACE_PAT: ${{ secrets.VS_MARKETPLACE_PAT }}
