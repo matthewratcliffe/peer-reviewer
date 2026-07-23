@@ -36,6 +36,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <VSCTCompile Include="ReviewNotesPackage.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+    </VSCTCompile>
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="System.Web" />
   </ItemGroup>
 

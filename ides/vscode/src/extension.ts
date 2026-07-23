@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { IpcClient } from "./ipc-client";
+import { IpcClient, ReviewNotesConfig } from "./ipc-client";
 import { ReviewNotesWebviewProvider } from "./webview-provider";
 import { ensureRunningAndRegister } from "./service-launcher";
 
@@ -33,12 +33,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     output.appendLine(`Failed to connect to service: ${msg}`);
+    provider.showError(`Unable to connect to Review Notes service: ${msg}`);
     vscode.window.showErrorMessage(`Review Notes: ${msg}`);
     return;
   }
 
   provider.setRepoRoot(repoRoot);
   output.appendLine(`Review Notes active for repo: ${repoRoot}`);
+
+  // Sync VS Code settings to service
+  await syncConfigToService(client, output);
 
   // Register commands
   context.subscriptions.push(
@@ -77,6 +81,23 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     })
   );
 
+  context.subscriptions.push(
+    vscode.commands.registerCommand("reviewNotes.testProvider", async () => {
+      const config = buildConfigFromSettings();
+      try {
+        const result = await client.testProvider(config);
+        if (result.ok) {
+          vscode.window.showInformationMessage(`Review Notes: ${config.activeProvider} provider connected successfully.`);
+        } else {
+          vscode.window.showErrorMessage(`Review Notes: ${config.activeProvider} provider test failed — ${result.error}`);
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        vscode.window.showErrorMessage(`Review Notes: Provider test error — ${msg}`);
+      }
+    })
+  );
+
   // Poll findings every 2 seconds
   pollInterval = setInterval(async () => {
     await refreshFindings(client, repoRoot, provider, output);
@@ -89,7 +110,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   // Re-setup auto-analyse when config changes
   context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration((e) => {
+    vscode.workspace.onDidChangeConfiguration(async (e) => {
+      if (e.affectsConfiguration("reviewNotes")) {
+        await syncConfigToService(client, output);
+      }
       if (e.affectsConfiguration("reviewNotes.autoAnalyse")) {
         setupAutoAnalyse(context, client, repoRoot, provider, output);
       }
@@ -158,6 +182,9 @@ async function refreshFindings(
     if (vscode.workspace.getConfiguration("reviewNotes").get("debugLogging")) {
       output.appendLine(`Findings poll error: ${msg}`);
     }
+    if (msg.includes("ECONNREFUSED") || msg.includes("ENOENT") || msg.includes("timed out")) {
+      provider.showError(`Service connection lost: ${msg}`);
+    }
   }
 }
 
@@ -193,5 +220,55 @@ function setupAutoAnalyse(
       output.appendLine("Auto-analyse triggered by timer");
       await runAnalysis(client, repoRoot, "changes", provider, output);
     }, intervalMinutes * 60 * 1000);
+  }
+}
+
+function buildConfigFromSettings(): ReviewNotesConfig {
+  const cfg = vscode.workspace.getConfiguration("reviewNotes");
+  return {
+    activeProvider: cfg.get("provider", "claude") as ReviewNotesConfig["activeProvider"],
+    providers: {
+      codex: {
+        command: cfg.get("providers.codex.command", "codex"),
+        args: cfg.get("providers.codex.args", ["exec", "--json"]),
+      },
+      llamaCpp: {
+        baseUrl: cfg.get("providers.llamaCpp.baseUrl", "http://127.0.0.1:8080"),
+      },
+      claude: {
+        command: cfg.get("providers.claude.command", "claude"),
+        args: cfg.get("providers.claude.args", ["--print"]),
+      },
+      opencode: {
+        command: cfg.get("providers.opencode.command", "opencode"),
+        args: cfg.get("providers.opencode.args", ["--print"]),
+      },
+      kiro: {
+        command: cfg.get("providers.kiro.command", "kiro"),
+        args: cfg.get("providers.kiro.args", ["--print"]),
+      },
+    },
+    systemPrompt: {
+      mode: cfg.get("systemPrompt.mode", "default") as "default" | "append" | "replace",
+      text: cfg.get("systemPrompt.text", ""),
+    },
+    preCommit: { blockOnFindings: true },
+    autoAnalyse: {
+      trigger: cfg.get("autoAnalyse.trigger", "disabled") as "disabled" | "on-save" | "periodically",
+      intervalMinutes: cfg.get("autoAnalyse.intervalMinutes", 5),
+    },
+    maxFilesPerRun: cfg.get("maxFilesPerRun", null),
+    debugLogging: cfg.get("debugLogging", false),
+  };
+}
+
+async function syncConfigToService(client: IpcClient, output: vscode.OutputChannel): Promise<void> {
+  try {
+    const config = buildConfigFromSettings();
+    await client.updateConfig(config);
+    output.appendLine("Settings synced to service");
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    output.appendLine(`Failed to sync settings to service: ${msg}`);
   }
 }

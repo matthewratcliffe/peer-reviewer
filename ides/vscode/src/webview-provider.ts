@@ -28,6 +28,10 @@ export class ReviewNotesWebviewProvider implements vscode.WebviewViewProvider {
     this.postMessage({ type: "processing-done" });
   }
 
+  showError(message: string): void {
+    this.postMessage({ type: "error", message });
+  }
+
   resolveWebviewView(
     webviewView: vscode.WebviewView,
     _context: vscode.WebviewViewResolveContext,
@@ -351,6 +355,12 @@ td.sev-cell { font-weight: bold; text-transform: uppercase; font-size: 10px; }
         break;
       case 'processing-done':
         overlay.classList.remove('visible');
+        break;
+      case 'error':
+        loadingState.textContent = msg.message || 'Failed to connect to service';
+        loadingState.style.display = '';
+        loadingState.style.color = 'var(--vscode-errorForeground)';
+        table.style.display = 'none';
         break;
       case 'note-loaded':
         if (selectedFinding && selectedFinding.id === msg.findingId) {

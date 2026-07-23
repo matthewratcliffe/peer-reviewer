@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ReviewNotes")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7c95fc4ca06f239f4038c325431cb9e41db2f866")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ddddcdfcee23d4bdd8174a962c0ad5537c60306e")]
 [assembly: System.Reflection.AssemblyProductAttribute("ReviewNotes")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ReviewNotes")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

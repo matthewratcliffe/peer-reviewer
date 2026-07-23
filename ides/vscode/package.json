@@ -41,6 +41,10 @@
       {
         "command": "reviewNotes.stopAnalysis",
         "title": "Review Notes: Stop Analysis"
+      },
+      {
+        "command": "reviewNotes.testProvider",
+        "title": "Review Notes: Test Provider Connection"
       }
     ],
     "configuration": {
@@ -110,7 +114,8 @@
         "reviewNotes.systemPrompt.text": {
           "type": "string",
           "default": "",
-          "description": "Custom system prompt text (used in append/replace mode)"
+          "description": "Custom system prompt text (used in append/replace mode). For multi-line prompts, edit this in settings.json directly.",
+          "editPresentation": "multilineText"
         },
         "reviewNotes.autoAnalyse.trigger": {
           "type": "string",

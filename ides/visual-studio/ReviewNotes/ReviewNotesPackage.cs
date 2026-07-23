@@ -40,6 +40,9 @@ namespace ReviewNotes
                 var menuItem = new System.ComponentModel.Design.MenuCommand(ShowToolWindow, commandId);
                 menuCommandService.AddCommand(menuItem);
             }
+
+            // Auto-show the tool window when the package loads
+            ShowToolWindow(this, EventArgs.Empty);
         }
 
         private void ShowToolWindow(object sender, EventArgs e)
