@@ -117,12 +117,12 @@ jobs:
 
       - name: Package VSIX
         working-directory: ides/vscode
-        run: npx @vscode/vsce package --out review-notes.vsix
+        run: npx @vscode/vsce package --out "vscode_peerreviewer_v.${{ env.VERSION }}.vsix"
 
       - uses: actions/upload-artifact@v4
         with:
           name: vscode-vsix
-          path: ides/vscode/review-notes.vsix
+          path: ides/vscode/vscode_peerreviewer_v.${{ env.VERSION }}.vsix
 
   # ─────────────────────────────────────────────────────────────────────
   # Publish VS Code Extension (only when selected)
@@ -161,13 +161,13 @@ jobs:
 
       - name: Publish to VS Code Marketplace
         working-directory: ides/vscode
-        run: npx @vscode/vsce publish --packagePath review-notes.vsix --azure-credential
+        run: npx @vscode/vsce publish --packagePath "vscode_peerreviewer_v.${{ env.VERSION }}.vsix" --azure-credential
 
       - name: Publish to Open VSX Registry
         working-directory: ides/vscode
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: npx ovsx publish review-notes.vsix --pat "$OVSX_PAT"
+        run: npx ovsx publish "vscode_peerreviewer_v.${{ env.VERSION }}.vsix" --pat "$OVSX_PAT"
 
   # ─────────────────────────────────────────────────────────────────────
   # Build JetBrains Rider Plugin (always runs)
@@ -212,12 +212,13 @@ jobs:
         working-directory: ides/rider
         run: |
           ZIP=$(find build/distributions -name "*-signed.zip" -o -name "*.zip" | head -1)
-          echo "path=$ZIP" >> "$GITHUB_OUTPUT"
+          cp "$ZIP" "rider_peerreviewer_v.${{ env.VERSION }}.zip"
+          echo "path=ides/rider/rider_peerreviewer_v.${{ env.VERSION }}.zip" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
         with:
           name: rider-plugin
-          path: ${{ steps.find-zip.outputs.path }}
+          path: ides/rider/rider_peerreviewer_v.${{ env.VERSION }}.zip
 
   # ─────────────────────────────────────────────────────────────────────
   # Publish JetBrains Rider Plugin (only when selected)
@@ -295,8 +296,11 @@ jobs:
             Write-Error "No .vsix file found after build"
             exit 1
           }
-          echo "path=$($vsix.FullName)" >> $env:GITHUB_OUTPUT
-          echo "name=$($vsix.Name)" >> $env:GITHUB_OUTPUT
+          $newName = "visualstudio_peerreviewer_v.${{ env.VERSION }}.vsix"
+          $dest = Join-Path $vsix.DirectoryName $newName
+          Copy-Item $vsix.FullName $dest
+          echo "path=$dest" >> $env:GITHUB_OUTPUT
+          echo "name=$newName" >> $env:GITHUB_OUTPUT
 
       - name: Upload VSIX
         uses: actions/upload-artifact@v4
@@ -384,9 +388,6 @@ jobs:
           name: "v${{ env.VERSION }}"
           generate_release_notes: true
           files: |
-            artifacts/vscode-vsix/*.vsix
-            artifacts/rider-plugin/*.zip
-            artifacts/visual-studio-vsix/*.vsix
-            artifacts/service-binary-windows/*
-            artifacts/service-binary-linux/*
-            artifacts/service-binary-macos/*
+            artifacts/vscode-vsix/vscode_peerreviewer_*.vsix
+            artifacts/rider-plugin/rider_peerreviewer_*.zip
+            artifacts/visual-studio-vsix/visualstudio_peerreviewer_*.vsix
