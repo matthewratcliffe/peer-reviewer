@@ -6,7 +6,7 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>ReviewNotes</RootNamespace>
     <AssemblyName>ReviewNotes</AssemblyName>
-    <GeneratePkgDefFile>true</GeneratePkgDefFile>
+    <GeneratePkgDefFile>false</GeneratePkgDefFile>
     <UseCodebase>true</UseCodebase>
     <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
     <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
@@ -19,6 +19,8 @@
     <UseWPF>true</UseWPF>
     <CreateVsixContainer>true</CreateVsixContainer>
     <DeployExtension>false</DeployExtension>
+    <DeployVSTemplates>false</DeployVSTemplates>
+    <TemplateOutputDirectory>$(IntermediateOutputPath)templates</TemplateOutputDirectory>
   </PropertyGroup>
 
   <ItemGroup>
@@ -37,6 +39,8 @@
     <Reference Include="System.Web" />
   </ItemGroup>
 
-  <Import Project="$(PkgMicrosoft_VSSDK_BuildTools)\tools\vssdk.targets" Condition="Exists('$(PkgMicrosoft_VSSDK_BuildTools)\tools\vssdk.targets')" />
+  <Import Project="$(PkgMicrosoft_VSSDK_BuildTools)\tools\vssdk\Microsoft.VsSDK.targets" Condition="Exists('$(PkgMicrosoft_VSSDK_BuildTools)\tools\vssdk\Microsoft.VsSDK.targets')" />
+
+  <Target Name="RunCreateVsixContainer" AfterTargets="Build" DependsOnTargets="CreateVsixContainer" />
 
 </Project>
