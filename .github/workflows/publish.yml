@@ -28,7 +28,7 @@ on:
           - 'yes'
           - 'no'
       publish_tui:
-        description: 'Publish TUI to npm'
+        description: 'Publish TUI to npm and GitHub Releases'
         required: true
         default: 'no'
         type: choice
@@ -420,7 +420,7 @@ jobs:
     if: github.event.inputs.publish_tui == 'yes'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
@@ -447,12 +447,44 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public
 
+      - name: Download TUI binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: tui-binary-*
+          path: tui-artifacts
+          merge-multiple: true
+
+      - name: Create tag
+        run: |
+          git tag "tui-v${{ env.VERSION }}"
+          git push origin "tui-v${{ env.VERSION }}"
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "tui-v${{ env.VERSION }}"
+          name: "Virtual Peer Review TUI v${{ env.VERSION }}"
+          body: |
+            ## Virtual Peer Review TUI v${{ env.VERSION }}
+
+            Interactive terminal client for Virtual Peer Review.
+
+            **Install via npm:**
+            ```
+            npm install -g virtualpeerreview
+            ```
+
+            **Or download the standalone binary for your platform below.**
+          files: |
+            tui-artifacts/virtualpeerreview
+            tui-artifacts/virtualpeerreview.exe
+
   # ─────────────────────────────────────────────────────────────────────
-  # Create GitHub Release with all built artifacts
+  # Create GitHub Release with IDE extension artifacts
   # ─────────────────────────────────────────────────────────────────────
   release:
     if: always() && !cancelled() && !failure()
-    needs: [build-vscode, build-rider, build-visual-studio, build-tui]
+    needs: [build-vscode, build-rider, build-visual-studio]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -478,6 +510,3 @@ jobs:
             artifacts/vscode-vsix/vscode_peerreviewer_*.vsix
             artifacts/rider-plugin/rider_peerreviewer_*.zip
             artifacts/visual-studio-vsix/visualstudio_peerreviewer_*.vsix
-            artifacts/tui-binary-linux/virtualpeerreview
-            artifacts/tui-binary-macos/virtualpeerreview
-            artifacts/tui-binary-windows/virtualpeerreview.exe
