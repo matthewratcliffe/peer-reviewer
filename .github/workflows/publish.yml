@@ -44,9 +44,91 @@ env:
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────
+  # Run tests across all packages
+  # ─────────────────────────────────────────────────────────────────────
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Test service
+        working-directory: packages/service
+        run: npx vitest run --reporter=junit --outputFile=../../test-results/service.xml
+
+      - name: Test TUI
+        working-directory: packages/tui
+        run: npx vitest run --reporter=junit --outputFile=../../test-results/tui.xml
+
+      - name: Test VS Code extension
+        working-directory: ides/vscode
+        run: npx vitest run --reporter=junit --outputFile=../../test-results/vscode.xml
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: 'Node.js Tests'
+          path: test-results/*.xml
+          reporter: java-junit
+
+  test-rider:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run Rider tests
+        working-directory: ides/rider
+        run: gradle test
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: 'Rider Tests'
+          path: ides/rider/build/test-results/test/*.xml
+          reporter: java-junit
+
+  test-visual-studio:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore and test
+        working-directory: ides/visual-studio
+        run: dotnet test PeerReviewer.Tests/PeerReviewer.Tests.csproj --configuration Release --logger "trx;LogFileName=results.trx"
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: 'Visual Studio Tests'
+          path: ides/visual-studio/PeerReviewer.Tests/TestResults/results.trx
+          reporter: dotnet-trx
+
+  # ─────────────────────────────────────────────────────────────────────
   # Build the service binary (shared by all extensions)
   # ─────────────────────────────────────────────────────────────────────
   build-service:
+    needs: [test, test-rider, test-visual-studio]
     strategy:
       matrix:
         include:

@@ -29,6 +29,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
+    "test": "vitest run",
     "package": "npm run build:cjs && npx pkg dist-cjs/index.js --config pkg.config.json --output ../../dist-bin/virtualpeerreview",
     "dev": "tsx src/index.ts"
   },
@@ -36,6 +37,7 @@
     "@types/node": "^20.14.2",
     "@yao-pkg/pkg": "^5.15.0",
     "tsx": "^4.16.2",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vitest": "^3.0.0"
   }
 }

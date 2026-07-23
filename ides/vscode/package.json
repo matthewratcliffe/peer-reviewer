@@ -7,8 +7,12 @@
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Other"],
-  "activationEvents": ["onStartupFinished"],
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -52,7 +56,13 @@
       "properties": {
         "peerReviewer.provider": {
           "type": "string",
-          "enum": ["claude", "codex", "llama-cpp", "opencode", "kiro"],
+          "enum": [
+            "claude",
+            "codex",
+            "llama-cpp",
+            "opencode",
+            "kiro"
+          ],
           "default": "claude",
           "description": "Active LLM provider for code review"
         },
@@ -63,8 +73,13 @@
         },
         "peerReviewer.providers.codex.args": {
           "type": "array",
-          "items": { "type": "string" },
-          "default": ["exec", "--json"],
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "exec",
+            "--json"
+          ],
           "description": "Codex CLI arguments"
         },
         "peerReviewer.providers.claude.command": {
@@ -74,8 +89,12 @@
         },
         "peerReviewer.providers.claude.args": {
           "type": "array",
-          "items": { "type": "string" },
-          "default": ["--print"],
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "--print"
+          ],
           "description": "Claude CLI arguments"
         },
         "peerReviewer.providers.opencode.command": {
@@ -85,8 +104,12 @@
         },
         "peerReviewer.providers.opencode.args": {
           "type": "array",
-          "items": { "type": "string" },
-          "default": ["--print"],
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "--print"
+          ],
           "description": "OpenCode CLI arguments"
         },
         "peerReviewer.providers.kiro.command": {
@@ -96,8 +119,12 @@
         },
         "peerReviewer.providers.kiro.args": {
           "type": "array",
-          "items": { "type": "string" },
-          "default": ["--print"],
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "--print"
+          ],
           "description": "Kiro CLI arguments"
         },
         "peerReviewer.providers.llamaCpp.baseUrl": {
@@ -107,7 +134,11 @@
         },
         "peerReviewer.systemPrompt.mode": {
           "type": "string",
-          "enum": ["default", "append", "replace"],
+          "enum": [
+            "default",
+            "append",
+            "replace"
+          ],
           "default": "default",
           "description": "System prompt mode"
         },
@@ -119,7 +150,11 @@
         },
         "peerReviewer.autoAnalyse.trigger": {
           "type": "string",
-          "enum": ["disabled", "on-save", "periodically"],
+          "enum": [
+            "disabled",
+            "on-save",
+            "periodically"
+          ],
           "default": "disabled",
           "description": "When to automatically re-analyse"
         },
@@ -130,12 +165,18 @@
           "description": "Interval in minutes for periodic auto-analyse"
         },
         "peerReviewer.maxFilesPerRun": {
-          "type": ["number", "null"],
+          "type": [
+            "number",
+            "null"
+          ],
           "default": null,
           "description": "Maximum files to analyse per run (null for unlimited)"
         },
         "peerReviewer.codingStandardsFolder": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "default": null,
           "description": "Path to a folder of Markdown (.md) files containing organisation coding standards. All .md files in this folder are concatenated and included in the review prompt."
         },
@@ -149,6 +190,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "test": "vitest run",
     "watch": "tsc -w"
   },
   "devDependencies": {
@@ -156,6 +198,7 @@
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.2.0",
     "ovsx": "^0.9.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^3.0.0"
   }
 }

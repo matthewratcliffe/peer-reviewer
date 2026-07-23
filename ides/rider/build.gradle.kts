@@ -20,6 +20,8 @@ dependencies {
     }
     implementation("com.kohlschutter.junixsocket:junixsocket-core:2.10.1")
     implementation("com.google.code.gson:gson:2.11.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 intellijPlatform {
@@ -40,6 +42,10 @@ intellijPlatform {
 
 kotlin {
     jvmToolchain(17)
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
 
 // The service binary is built separately via `npm run package --workspace packages/service`,

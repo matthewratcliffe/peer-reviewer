@@ -11,6 +11,8 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "package": "npm run build:cjs && pkg dist-cjs/index.js --config pkg.config.json --output ../../dist-bin/peer-reviewer-service"
   },
@@ -23,10 +25,11 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
-    "@types/node": "^20.14.2",
+    "@types/node": "^20.19.43",
     "@types/ws": "^8.5.10",
     "@yao-pkg/pkg": "^5.15.0",
     "tsx": "^4.16.2",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vitest": "^3.0.0"
   }
 }
