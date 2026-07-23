@@ -1,0 +1,11 @@
+{
+  "name": "review-notes",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev:service": "npm run dev --workspace packages/service"
+  }
+}

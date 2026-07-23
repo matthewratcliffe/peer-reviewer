@@ -1,0 +1,309 @@
+name: Build & Publish Extensions
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to stores (yes/no)'
+        required: true
+        default: 'no'
+
+env:
+  NODE_VERSION: '20'
+  JAVA_VERSION: '17'
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────
+  # Build the service binary (shared by all extensions)
+  # ─────────────────────────────────────────────────────────────────────
+  build-service:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            binary: review-notes-service
+            platform: linux
+          - os: macos-latest
+            binary: review-notes-service
+            platform: macos
+          - os: windows-latest
+            binary: review-notes-service.exe
+            platform: windows
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - run: npm run package --workspace packages/service
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: service-binary-${{ matrix.platform }}
+          path: dist-bin/${{ matrix.binary }}
+
+  # ─────────────────────────────────────────────────────────────────────
+  # VS Code Extension
+  # (No signing needed — the VS Code Marketplace signs automatically)
+  # ─────────────────────────────────────────────────────────────────────
+  publish-vscode:
+    needs: build-service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Download service binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: service-binary-*
+          path: ides/vscode/bin
+          merge-multiple: true
+
+      - name: Make binaries executable
+        run: chmod +x ides/vscode/bin/review-notes-service || true
+
+      - name: Install dependencies
+        working-directory: ides/vscode
+        run: npm ci
+
+      - name: Compile TypeScript
+        working-directory: ides/vscode
+        run: npx tsc
+
+      - name: Package VSIX
+        working-directory: ides/vscode
+        run: npx @vscode/vsce package --out review-notes.vsix
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vscode-vsix
+          path: ides/vscode/review-notes.vsix
+
+      - name: Publish to VS Code Marketplace
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
+        working-directory: ides/vscode
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npx @vscode/vsce publish --pat "$VSCE_PAT"
+
+      - name: Publish to Open VSX Registry
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
+        working-directory: ides/vscode
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: npx ovsx publish review-notes.vsix --pat "$OVSX_PAT"
+
+  # ─────────────────────────────────────────────────────────────────────
+  # JetBrains Rider Plugin (signed with self-generated keypair)
+  #
+  # SETUP (one-time):
+  #   1. Download marketplace-zip-signer:
+  #      curl -L -o marketplace-zip-signer.jar \
+  #        https://github.com/JetBrains/marketplace-zip-signer/releases/latest/download/marketplace-zip-signer-cli.jar
+  #   2. Generate keys:
+  #      java -jar marketplace-zip-signer.jar generate-keys \
+  #        --private-key private.pem --public-key-chain chain.crt
+  #   3. Upload chain.crt to your JetBrains Marketplace publisher profile
+  #      (Marketplace > your profile > Settings > Keys)
+  #   4. Store as GitHub secrets:
+  #      - JETBRAINS_SIGNING_KEY: contents of private.pem
+  #      - JETBRAINS_CERTIFICATE_CHAIN: contents of chain.crt
+  #      - JETBRAINS_MARKETPLACE_TOKEN: API token from JetBrains account
+  # ─────────────────────────────────────────────────────────────────────
+  publish-rider:
+    needs: build-service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Download service binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: service-binary-*
+          path: dist-bin
+          merge-multiple: true
+
+      - name: Make binary executable
+        run: chmod +x dist-bin/review-notes-service || true
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and sign plugin
+        working-directory: ides/rider
+        env:
+          JETBRAINS_SIGNING_KEY: ${{ secrets.JETBRAINS_SIGNING_KEY }}
+          JETBRAINS_CERTIFICATE_CHAIN: ${{ secrets.JETBRAINS_CERTIFICATE_CHAIN }}
+        run: gradle signPlugin
+
+      - name: Find built plugin ZIP
+        id: find-zip
+        working-directory: ides/rider
+        run: |
+          ZIP=$(find build/distributions -name "*-signed.zip" -o -name "*.zip" | head -1)
+          echo "path=$ZIP" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rider-plugin
+          path: ${{ steps.find-zip.outputs.path }}
+
+      - name: Publish to JetBrains Marketplace
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
+        working-directory: ides/rider
+        env:
+          JETBRAINS_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
+          JETBRAINS_SIGNING_KEY: ${{ secrets.JETBRAINS_SIGNING_KEY }}
+          JETBRAINS_CERTIFICATE_CHAIN: ${{ secrets.JETBRAINS_CERTIFICATE_CHAIN }}
+        run: gradle publishPlugin -Dorg.gradle.project.intellijPublishToken="$JETBRAINS_TOKEN"
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Visual Studio Extension (signed via SignPath — free for open source)
+  #
+  # SETUP (one-time):
+  #   1. Register at https://signpath.io (free for OSS projects)
+  #   2. Create an organization and project
+  #   3. Link your GitHub repo to SignPath
+  #   4. Create a signing policy (release signing with code-signing cert)
+  #   5. Store as GitHub secrets:
+  #      - SIGNPATH_API_TOKEN: your SignPath CI API token
+  #      - SIGNPATH_ORGANIZATION_ID: your org ID
+  #      - SIGNPATH_PROJECT_SLUG: your project slug
+  #      - SIGNPATH_SIGNING_POLICY_SLUG: the signing policy slug
+  #      - VS_MARKETPLACE_PAT: Visual Studio Marketplace PAT
+  # ─────────────────────────────────────────────────────────────────────
+  publish-visual-studio:
+    needs: build-service
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Download Windows service binary
+        uses: actions/download-artifact@v4
+        with:
+          name: service-binary-windows
+          path: ides/visual-studio/ReviewNotes/bin
+
+      - name: Restore NuGet packages
+        working-directory: ides/visual-studio
+        run: dotnet restore
+
+      - name: Build VSIX
+        working-directory: ides/visual-studio
+        run: msbuild ReviewNotes.sln /p:Configuration=Release /p:DeployExtension=false
+
+      - name: Find VSIX
+        id: find-vsix
+        shell: pwsh
+        run: |
+          $vsix = Get-ChildItem -Path "ides/visual-studio" -Recurse -Filter "*.vsix" | Select-Object -First 1
+          echo "path=$($vsix.FullName)" >> $env:GITHUB_OUTPUT
+          echo "name=$($vsix.Name)" >> $env:GITHUB_OUTPUT
+
+      - name: Upload unsigned VSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-studio-vsix-unsigned
+          path: ${{ steps.find-vsix.outputs.path }}
+
+      # Sign via SignPath (free for open source projects)
+      # SignPath submits the artifact, signs it with a trusted CA certificate,
+      # and returns the signed version. No certificate purchase needed.
+      - name: Sign VSIX with SignPath
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ secrets.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: 'vsix'
+          github-artifact-id: visual-studio-vsix-unsigned
+          wait-for-completion: true
+          output-artifact-directory: signed-vsix
+
+      - name: Upload signed VSIX
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-studio-vsix
+          path: signed-vsix/*.vsix
+
+      - name: Upload unsigned as final (if not publishing)
+        if: "!(startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes')"
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-studio-vsix
+          path: ${{ steps.find-vsix.outputs.path }}
+
+      - name: Publish to Visual Studio Marketplace
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
+        shell: pwsh
+        env:
+          VS_MARKETPLACE_PAT: ${{ secrets.VS_MARKETPLACE_PAT }}
+        run: |
+          $vsix = Get-ChildItem -Path "signed-vsix" -Filter "*.vsix" | Select-Object -First 1
+          # VsixPublisher is included with the VS build tools on the runner
+          $vsixPublisher = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+            -latest -requires Microsoft.VisualStudio.Component.VSSDK `
+            -find "VSSDK\VisualStudioIntegration\Tools\Bin\VsixPublisher.exe" | Select-Object -First 1
+          if (-not $vsixPublisher) {
+            Write-Error "VsixPublisher.exe not found"
+            exit 1
+          }
+          & $vsixPublisher publish `
+            -payload $vsix.FullName `
+            -publishManifest "ides/visual-studio/publishManifest.json" `
+            -personalAccessToken $env:VS_MARKETPLACE_PAT
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Create GitHub Release with all artifacts
+  # ─────────────────────────────────────────────────────────────────────
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [publish-vscode, publish-rider, publish-visual-studio]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            artifacts/vscode-vsix/*.vsix
+            artifacts/rider-plugin/*.zip
+            artifacts/visual-studio-vsix/*.vsix
+            artifacts/service-binary-windows/*
+            artifacts/service-binary-linux/*
+            artifacts/service-binary-macos/*
