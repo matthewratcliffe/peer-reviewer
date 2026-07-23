@@ -64,10 +64,14 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────
   # VS Code Extension
   # (No signing needed — the VS Code Marketplace signs automatically)
+  # Authentication via Microsoft Entra ID OIDC — no PAT required.
   # ─────────────────────────────────────────────────────────────────────
   publish-vscode:
     needs: build-service
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for OIDC token request
     steps:
       - uses: actions/checkout@v4
 
@@ -103,12 +107,18 @@ jobs:
           name: vscode-vsix
           path: ides/vscode/review-notes.vsix
 
+      - name: Azure login (OIDC)
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+
       - name: Publish to VS Code Marketplace
         if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
         working-directory: ides/vscode
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx @vscode/vsce publish --pat "$VSCE_PAT"
+        run: npx @vscode/vsce publish --azure-credential
 
       - name: Publish to Open VSX Registry
         if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'yes'
