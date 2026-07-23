@@ -284,7 +284,7 @@ jobs:
 
       - name: Build VSIX
         working-directory: ides/visual-studio
-        run: msbuild ReviewNotes.sln /p:Configuration=Release /p:DeployExtension=false
+        run: msbuild ReviewNotes.sln /p:Configuration=Release /p:DeployExtension=false /p:CreateVsixContainer=true
 
       - name: Find VSIX
         id: find-vsix
