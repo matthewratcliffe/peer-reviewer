@@ -1,0 +1,17 @@
+<idea-plugin>
+    <id>com.reviewnotes.rider</id>
+    <name>Review Notes</name>
+    <vendor>Review Notes</vendor>
+    <description>Automated first-pass peer review notes surfaced in a dedicated tool window.</description>
+
+    <depends>com.intellij.modules.rider</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Review Notes"
+                    anchor="bottom"
+                    factoryClass="com.reviewnotes.ReviewNotesToolWindowFactory"/>
+        <applicationConfigurable instance="com.reviewnotes.ReviewNotesConfigurable"
+                                  displayName="Review Notes"
+                                  parentId="tools"/>
+    </extensions>
+</idea-plugin>

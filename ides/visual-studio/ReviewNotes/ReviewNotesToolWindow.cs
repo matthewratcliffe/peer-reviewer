@@ -1,0 +1,16 @@
+using System;
+using System.Runtime.InteropServices;
+using Microsoft.VisualStudio.Shell;
+
+namespace ReviewNotes
+{
+    [Guid("c3d4e5f6-a7b8-c9d0-1e2f-3a4b5c6d7e8f")]
+    public class ReviewNotesToolWindow : ToolWindowPane
+    {
+        public ReviewNotesToolWindow() : base(null)
+        {
+            Caption = "Review Notes";
+            Content = new ReviewNotesControl();
+        }
+    }
+}

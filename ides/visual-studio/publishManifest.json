@@ -1,0 +1,12 @@
+{
+  "categories": ["coding"],
+  "identity": {
+    "internalName": "ReviewNotes"
+  },
+  "overview": "overview.md",
+  "priceCategory": "free",
+  "publisher": "ReviewNotes",
+  "private": false,
+  "qna": true,
+  "repo": "https://github.com/your-org/peer-review"
+}

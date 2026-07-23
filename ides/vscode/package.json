@@ -1,0 +1,151 @@
+{
+  "name": "review-notes-vscode",
+  "displayName": "Review Notes",
+  "description": "AI-powered code review findings displayed inline in VS Code",
+  "version": "0.1.0",
+  "publisher": "reviewnotes",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "review-notes",
+          "title": "Review Notes",
+          "icon": "$(eye)"
+        }
+      ]
+    },
+    "views": {
+      "review-notes": [
+        {
+          "type": "webview",
+          "id": "reviewNotes.panel",
+          "name": "Review Notes"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "reviewNotes.reanalyseChanges",
+        "title": "Review Notes: Re-analyse Changes"
+      },
+      {
+        "command": "reviewNotes.reanalyseProject",
+        "title": "Review Notes: Re-analyse Project"
+      },
+      {
+        "command": "reviewNotes.stopAnalysis",
+        "title": "Review Notes: Stop Analysis"
+      }
+    ],
+    "configuration": {
+      "title": "Review Notes",
+      "properties": {
+        "reviewNotes.provider": {
+          "type": "string",
+          "enum": ["claude", "codex", "llama-cpp", "opencode", "kiro"],
+          "default": "claude",
+          "description": "Active LLM provider for code review"
+        },
+        "reviewNotes.providers.codex.command": {
+          "type": "string",
+          "default": "codex",
+          "description": "Codex CLI command"
+        },
+        "reviewNotes.providers.codex.args": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["exec", "--json"],
+          "description": "Codex CLI arguments"
+        },
+        "reviewNotes.providers.claude.command": {
+          "type": "string",
+          "default": "claude",
+          "description": "Claude CLI command"
+        },
+        "reviewNotes.providers.claude.args": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["--print"],
+          "description": "Claude CLI arguments"
+        },
+        "reviewNotes.providers.opencode.command": {
+          "type": "string",
+          "default": "opencode",
+          "description": "OpenCode CLI command"
+        },
+        "reviewNotes.providers.opencode.args": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["--print"],
+          "description": "OpenCode CLI arguments"
+        },
+        "reviewNotes.providers.kiro.command": {
+          "type": "string",
+          "default": "kiro",
+          "description": "Kiro CLI command"
+        },
+        "reviewNotes.providers.kiro.args": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["--print"],
+          "description": "Kiro CLI arguments"
+        },
+        "reviewNotes.providers.llamaCpp.baseUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8080",
+          "description": "llama.cpp server base URL"
+        },
+        "reviewNotes.systemPrompt.mode": {
+          "type": "string",
+          "enum": ["default", "append", "replace"],
+          "default": "default",
+          "description": "System prompt mode"
+        },
+        "reviewNotes.systemPrompt.text": {
+          "type": "string",
+          "default": "",
+          "description": "Custom system prompt text (used in append/replace mode)"
+        },
+        "reviewNotes.autoAnalyse.trigger": {
+          "type": "string",
+          "enum": ["disabled", "on-save", "periodically"],
+          "default": "disabled",
+          "description": "When to automatically re-analyse"
+        },
+        "reviewNotes.autoAnalyse.intervalMinutes": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "description": "Interval in minutes for periodic auto-analyse"
+        },
+        "reviewNotes.maxFilesPerRun": {
+          "type": ["number", "null"],
+          "default": null,
+          "description": "Maximum files to analyse per run (null for unlimited)"
+        },
+        "reviewNotes.debugLogging": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging to the output channel"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.0",
+    "ovsx": "^0.9.0",
+    "typescript": "^5.3.3"
+  }
+}
