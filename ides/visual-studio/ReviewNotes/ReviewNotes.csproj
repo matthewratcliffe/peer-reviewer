@@ -39,6 +39,14 @@
     <Reference Include="System.Web" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="bin\review-notes-service.exe" Condition="Exists('bin\review-notes-service.exe')">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>bin</VSIXSubPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
   <Import Project="$(PkgMicrosoft_VSSDK_BuildTools)\tools\vssdk\Microsoft.VsSDK.targets" Condition="Exists('$(PkgMicrosoft_VSSDK_BuildTools)\tools\vssdk\Microsoft.VsSDK.targets')" />
 
   <Target Name="RunCreateVsixContainer" AfterTargets="Build" DependsOnTargets="CreateVsixContainer" />
