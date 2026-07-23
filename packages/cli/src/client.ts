@@ -5,13 +5,13 @@ import { join } from "node:path";
 
 function resolveIpcPath(): string {
   if (process.platform === "win32") {
-    return `\\\\.\\pipe\\review-notes-${userInfo().username}`;
+    return `\\\\.\\pipe\\peer-reviewer-${userInfo().username}`;
   }
-  return join(homedir(), ".review-notes", "service.sock");
+  return join(homedir(), ".peer-reviewer", "service.sock");
 }
 
 function readToken(): string {
-  return readFileSync(join(homedir(), ".review-notes", "session.token"), "utf-8").trim();
+  return readFileSync(join(homedir(), ".peer-reviewer", "session.token"), "utf-8").trim();
 }
 
 export interface Finding {
@@ -34,14 +34,14 @@ function call<T>(method: string, path: string, body?: unknown): Promise<T> {
         socketPath: resolveIpcPath(),
         path,
         method,
-        headers: { "x-review-notes-token": readToken(), "content-type": "application/json" },
+        headers: { "x-peer-reviewer-token": readToken(), "content-type": "application/json" },
       },
       (res) => {
         let responseBody = "";
         res.on("data", (chunk) => (responseBody += chunk));
         res.on("end", () => {
           if (res.statusCode && res.statusCode >= 400) {
-            reject(new Error(`review-notes-service responded ${res.statusCode}: ${responseBody}`));
+            reject(new Error(`peer-reviewer-service responded ${res.statusCode}: ${responseBody}`));
             return;
           }
           resolve(JSON.parse(responseBody) as T);
@@ -67,7 +67,7 @@ export function dismissFinding(id: string): Promise<{ ok: boolean }> {
   return call("POST", `/findings/${id}/dismiss`);
 }
 
-export interface ReviewNotesConfig {
+export interface PeerReviewerConfig {
   activeProvider: "codex" | "llama-cpp" | "claude";
   providers: {
     codex: { command: string; args: string[] };
@@ -78,6 +78,6 @@ export interface ReviewNotesConfig {
   preCommit: { blockOnFindings: boolean };
 }
 
-export function getConfig(): Promise<ReviewNotesConfig> {
+export function getConfig(): Promise<PeerReviewerConfig> {
   return call("GET", "/config");
 }

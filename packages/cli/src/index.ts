@@ -10,22 +10,22 @@ async function check(): Promise<void> {
   const blocking = findings.filter((f) => !f.dismissed && (f.severity === "high" || f.severity === "medium"));
 
   if (blocking.length === 0) {
-    console.log("review-notes: no unresolved medium/high findings.");
+    console.log("peer-reviewer: no unresolved medium/high findings.");
     return;
   }
 
   const config = await getConfig();
   const willBlock = config.preCommit.blockOnFindings;
 
-  console.error(`review-notes: ${blocking.length} unresolved finding(s)${willBlock ? " block this commit" : " (warning only)"}:\n`);
+  console.error(`peer-reviewer: ${blocking.length} unresolved finding(s)${willBlock ? " block this commit" : " (warning only)"}:\n`);
   for (const finding of blocking) {
     console.error(`  [${finding.severity.toUpperCase()}/${finding.category}] ${finding.file}:${finding.startLine} — ${finding.title}`);
     console.error(`      ${finding.message}`);
-    console.error(`      dismiss: review-notes dismiss ${finding.id}\n`);
+    console.error(`      dismiss: peer-reviewer dismiss ${finding.id}\n`);
   }
 
   if (!willBlock) {
-    console.error("Blocking is disabled (review-notes preCommit.blockOnFindings=false) — commit will proceed.");
+    console.error("Blocking is disabled (peer-reviewer preCommit.blockOnFindings=false) — commit will proceed.");
     return;
   }
 
@@ -35,12 +35,12 @@ async function check(): Promise<void> {
 
 async function dismiss(id: string | undefined): Promise<void> {
   if (!id) {
-    console.error("usage: review-notes dismiss <finding-id>");
+    console.error("usage: peer-reviewer dismiss <finding-id>");
     process.exitCode = 1;
     return;
   }
   await dismissFinding(id);
-  console.log(`review-notes: dismissed ${id}`);
+  console.log(`peer-reviewer: dismissed ${id}`);
 }
 
 async function main() {
@@ -55,15 +55,15 @@ async function main() {
       installHook();
       return;
     default:
-      console.error("usage: review-notes <check|dismiss|install-hook>");
+      console.error("usage: peer-reviewer <check|dismiss|install-hook>");
       process.exitCode = 1;
   }
 }
 
 main().catch((error) => {
-  console.error(`review-notes: ${error.message}`);
+  console.error(`peer-reviewer: ${error.message}`);
   if (command === "check") {
-    console.error("Is review-notes-service running? If not, the commit is allowed through unchecked.");
+    console.error("Is peer-reviewer-service running? If not, the commit is allowed through unchecked.");
   } else {
     process.exitCode = 1;
   }

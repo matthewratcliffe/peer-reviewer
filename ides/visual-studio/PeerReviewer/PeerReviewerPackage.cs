@@ -6,16 +6,16 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Task = System.Threading.Tasks.Task;
 
-namespace ReviewNotes
+namespace PeerReviewer
 {
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [Guid(PackageGuidString)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    [ProvideToolWindow(typeof(ReviewNotesToolWindow), Style = VsDockStyle.Tabbed,
+    [ProvideToolWindow(typeof(PeerReviewerToolWindow), Style = VsDockStyle.Tabbed,
         Window = "3ae79031-e1bc-11d0-8f78-00a0c9110057")]
-    [ProvideOptionPage(typeof(ReviewNotesOptionsPage), "ReviewNotes", "General", 0, 0, true)]
+    [ProvideOptionPage(typeof(PeerReviewerOptionsPage), "PeerReviewer", "General", 0, 0, true)]
     [ProvideAutoLoad(UIContextGuids80.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
-    public sealed class ReviewNotesPackage : AsyncPackage
+    public sealed class PeerReviewerPackage : AsyncPackage
     {
         public const string PackageGuidString = "d4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f90";
         public const string ToolWindowCommandSetGuid = "e5f6a7b8-c9d0-1e2f-3a4b-5c6d7e8f9012";
@@ -49,9 +49,9 @@ namespace ReviewNotes
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            var window = FindToolWindow(typeof(ReviewNotesToolWindow), 0, true);
+            var window = FindToolWindow(typeof(PeerReviewerToolWindow), 0, true);
             if (window?.Frame == null)
-                throw new NotSupportedException("Cannot create Review Notes tool window");
+                throw new NotSupportedException("Cannot create Peer Reviewer tool window");
 
             var windowFrame = (IVsWindowFrame)window.Frame;
             Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
@@ -59,15 +59,15 @@ namespace ReviewNotes
 
         public override IVsAsyncToolWindowFactory GetAsyncToolWindowFactory(Guid toolWindowType)
         {
-            if (toolWindowType == typeof(ReviewNotesToolWindow).GUID)
+            if (toolWindowType == typeof(PeerReviewerToolWindow).GUID)
                 return this;
             return base.GetAsyncToolWindowFactory(toolWindowType);
         }
 
         protected override string GetToolWindowTitle(Type toolWindowType, int id)
         {
-            if (toolWindowType == typeof(ReviewNotesToolWindow))
-                return "Review Notes";
+            if (toolWindowType == typeof(PeerReviewerToolWindow))
+                return "Peer Reviewer";
             return base.GetToolWindowTitle(toolWindowType, id);
         }
     }

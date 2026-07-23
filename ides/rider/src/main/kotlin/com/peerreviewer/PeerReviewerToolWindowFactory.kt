@@ -1,4 +1,4 @@
-package com.reviewnotes
+package com.peerreviewer
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 
-private val LOG = Logger.getInstance(ReviewNotesToolWindowFactory::class.java)
+private val LOG = Logger.getInstance(PeerReviewerToolWindowFactory::class.java)
 
 private const val POLL_INTERVAL_MS = 2000L
 private const val PROGRESS_POLL_INTERVAL_MS = 1000L
@@ -238,7 +238,7 @@ private class FindingsTableCellRenderer : DefaultTableCellRenderer() {
     }
 }
 
-class ReviewNotesToolWindowFactory : ToolWindowFactory {
+class PeerReviewerToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val client = IpcClient()
         val repoPath = project.basePath ?: throw IllegalStateException("project has no base path")
@@ -360,7 +360,7 @@ class ReviewNotesToolWindowFactory : ToolWindowFactory {
         notesArea.document.addDocumentListener(object : DocumentListener {
             private fun scheduleSave() {
                 notesSaveTimer?.cancel()
-                notesSaveTimer = Timer("review-notes-save", true).apply {
+                notesSaveTimer = Timer("peer-reviewer-save", true).apply {
                     schedule(object : TimerTask() {
                         override fun run() {
                             val finding = currentNoteFinding ?: return
@@ -368,7 +368,7 @@ class ReviewNotesToolWindowFactory : ToolWindowFactory {
                             try {
                                 saveNote(repo, finding, notesArea.text)
                             } catch (e: Exception) {
-                                LOG.warn("review-notes: failed to save note", e)
+                                LOG.warn("peer-reviewer: failed to save note", e)
                             }
                         }
                     }, NOTES_SAVE_DELAY_MS)
@@ -405,7 +405,7 @@ class ReviewNotesToolWindowFactory : ToolWindowFactory {
             isContentAreaFilled = false
         }
         settingsButton.addActionListener {
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, ReviewNotesConfigurable::class.java)
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, PeerReviewerConfigurable::class.java)
         }
         val progressBar = JProgressBar().apply {
             isIndeterminate = true
@@ -450,7 +450,7 @@ class ReviewNotesToolWindowFactory : ToolWindowFactory {
         fun runAnalysis(action: (IpcClient, String) -> Unit) {
             val repo = repoRoot.get()
             if (repo == null) {
-                errorLabel.text = "<html><div style='text-align:center'>Analysis failed:<br>review-notes-service is not connected yet. Please wait and try again.</div></html>"
+                errorLabel.text = "<html><div style='text-align:center'>Analysis failed:<br>peer-reviewer-service is not connected yet. Please wait and try again.</div></html>"
                 (centerCards.layout as CardLayout).show(centerCards, "error")
                 return
             }
@@ -462,7 +462,7 @@ class ReviewNotesToolWindowFactory : ToolWindowFactory {
             (centerCards.layout as CardLayout).show(centerCards, "processing")
 
             val polling = java.util.concurrent.atomic.AtomicBoolean(true)
-            thread(isDaemon = true, name = "review-notes-progress-poll") {
+            thread(isDaemon = true, name = "peer-reviewer-progress-poll") {
                 while (polling.get()) {
                     try {
                         val progress = client.getAnalysisProgress(repo)
@@ -483,12 +483,12 @@ class ReviewNotesToolWindowFactory : ToolWindowFactory {
                 }
             }
 
-            thread(isDaemon = true, name = "review-notes-analyze") {
+            thread(isDaemon = true, name = "peer-reviewer-analyze") {
                 var failure: Exception? = null
                 try {
                     action(client, repo)
                 } catch (e: Exception) {
-                    LOG.warn("review-notes: failed to run analysis", e)
+                    LOG.warn("peer-reviewer: failed to run analysis", e)
                     failure = e
                 } finally {
                     polling.set(false)
@@ -525,7 +525,7 @@ class ReviewNotesToolWindowFactory : ToolWindowFactory {
         reanalyzeProjectButton.addActionListener { runAnalysis { c, repo -> c.analyzeProject(repo) } }
         stopAnalysisButton.addActionListener {
             val repo = repoRoot.get() ?: return@addActionListener
-            thread(isDaemon = true, name = "review-notes-cancel") {
+            thread(isDaemon = true, name = "peer-reviewer-cancel") {
                 try { client.cancelAnalysis(repo) } catch (_: Exception) {}
             }
         }
@@ -577,7 +577,7 @@ class ReviewNotesToolWindowFactory : ToolWindowFactory {
         val content = ContentFactory.getInstance().createContent(panel, "", false)
         toolWindow.contentManager.addContent(content)
 
-        thread(isDaemon = true, name = "review-notes-launch") {
+        thread(isDaemon = true, name = "peer-reviewer-launch") {
             try {
                 repoRoot.set(ServiceLauncher.ensureRunningAndRegister(client, repoPath))
             } catch (e: Exception) {
@@ -643,11 +643,11 @@ class ReviewNotesToolWindowFactory : ToolWindowFactory {
             val repo = repoRoot.get() ?: return
             if (!analyseRunning.compareAndSet(false, true)) return
             javax.swing.SwingUtilities.invokeLater { onStart() }
-            thread(isDaemon = true, name = "review-notes-auto-analyse") {
+            thread(isDaemon = true, name = "peer-reviewer-auto-analyse") {
                 try {
                     client.analyzeChanges(repo)
                 } catch (e: Exception) {
-                    LOG.warn("review-notes: auto-analyse failed", e)
+                    LOG.warn("peer-reviewer: auto-analyse failed", e)
                 } finally {
                     analyseRunning.set(false)
                     javax.swing.SwingUtilities.invokeLater { onFinish() }
@@ -669,7 +669,7 @@ class ReviewNotesToolWindowFactory : ToolWindowFactory {
             }
         })
 
-        thread(isDaemon = true, name = "review-notes-auto-analyse-config") {
+        thread(isDaemon = true, name = "peer-reviewer-auto-analyse-config") {
             var lastTrigger = ""
             var lastInterval = 0
             while (true) {
@@ -684,7 +684,7 @@ class ReviewNotesToolWindowFactory : ToolWindowFactory {
 
                         if (trigger == "periodically") {
                             val periodMs = interval.toLong() * 60_000L
-                            periodicTimer = Timer("review-notes-periodic-analyse", true).apply {
+                            periodicTimer = Timer("peer-reviewer-periodic-analyse", true).apply {
                                 scheduleAtFixedRate(object : TimerTask() {
                                     override fun run() {
                                         triggerAnalyseInBackground()

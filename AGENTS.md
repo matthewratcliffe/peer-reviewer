@@ -12,7 +12,7 @@ touching the API contract between the service and any IDE client.
 - `packages/cli` — thin wrapper around the service's HTTP API, used by the git
   pre-commit hook. No analysis logic lives here.
 - `ides/rider`, `ides/vscode`, `ides/visual-studio` — thin clients. Each renders
-  the "Review Notes" tab, subscribes to findings over WebSocket, and handles
+  the "Peer Reviewer" tab, subscribes to findings over WebSocket, and handles
   click-to-navigate. They must NOT implement their own diffing, provider calls,
   or finding logic — if you find yourself doing that, it belongs in the service.
 
@@ -20,14 +20,14 @@ touching the API contract between the service and any IDE client.
 
 The service does NOT listen on a TCP port. It listens on a local IPC channel
 only the current OS user can reach:
-- Windows: named pipe `\\.\pipe\review-notes-<user>`
-- macOS/Linux: unix domain socket at `~/.review-notes/service.sock` (mode 0600)
+- Windows: named pipe `\\.\pipe\peer-reviewer-<user>`
+- macOS/Linux: unix domain socket at `~/.peer-reviewer/service.sock` (mode 0600)
 
 This keeps it inaccessible to other processes/users/network on the machine —
 no port to scan or hit from a browser. HTTP and WebSocket both work fine over
 these transports (Node's `http`/`ws` servers accept a socket path in place of a
 port). Every client also sends a per-session auth token (written to
-`~/.review-notes/session.token`, mode 0600, regenerated per service start) as
+`~/.peer-reviewer/session.token`, mode 0600, regenerated per service start) as
 defense in depth in case the IPC boundary is ever misconfigured.
 
 Clients must resolve the socket path themselves (same logic, not a shared
@@ -37,7 +37,7 @@ runtime dependency, since each client is a different language) — see
 ## The contract (keep the three clients in sync)
 
 Every request (HTTP and the WS upgrade) must include header
-`x-review-notes-token: <token>` read from `~/.review-notes/session.token`.
+`x-peer-reviewer-token: <token>` read from `~/.peer-reviewer/session.token`.
 
 The service is a single shared daemon per machine, watching multiple repos at
 once (one open IDE window per project, but one service process). A client
@@ -64,12 +64,12 @@ must register its repo before querying it:
   (total - completed)`.
 - `WS   /events` — pushes events tagged with `repo`, e.g. `findings-updated`
   with the changed file path, scoped to that repo
-- `GET  /config` — current config (`ReviewNotesConfig` in `api-types.ts`):
+- `GET  /config` — current config (`PeerReviewerConfig` in `api-types.ts`):
   active provider (exactly one of codex/llama-cpp/claude), that provider's
   settings, system prompt override mode/text, and `preCommit.blockOnFindings`
 - `PUT  /config` — replace the whole config (full object, validated against
   `ConfigSchema` in `packages/service/src/config.ts`); persisted to
-  `~/.review-notes/config.json` and applied live (in-flight repo sessions get
+  `~/.peer-reviewer/config.json` and applied live (in-flight repo sessions get
   the new provider/prompt on their next analysis, no restart needed)
 - `POST /providers/test {<same shape as PUT /config>}` — connectivity check for
   whichever provider is `activeProvider` in the posted config (does NOT persist
@@ -78,7 +78,7 @@ must register its repo before querying it:
   on success, 502 `{ error }` on failure (see `providers/test-connection.ts`).
 
 Every IDE client implements the same three behaviors against this contract:
-1. Render a "Review Notes" list/tab, grouped by file.
+1. Render a "Peer Reviewer" list/tab, grouped by file.
 2. On finding click: open the file at the finding's line range, show a
    description box (title, severity, provider, message).
 3. On `findings-updated` event: refresh the list for that file without a full

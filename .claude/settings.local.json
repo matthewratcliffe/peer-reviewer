@@ -6,7 +6,7 @@
       "Bash(npx tsc *)",
       "Bash(node -e \"console.log\\('ok'\\)\")",
       "Bash(npx pkg *)",
-      "Bash(timeout 5 ./dist-bin/review-notes-service.exe)",
+      "Bash(timeout 5 ./dist-bin/peer-reviewer-service.exe)",
       "Bash(echo \"exit: $?\")",
       "Bash(gradle -v)",
       "Bash(java -version)",

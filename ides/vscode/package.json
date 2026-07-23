@@ -1,9 +1,9 @@
 {
-  "name": "review-notes-vscode",
-  "displayName": "Review Notes",
+  "name": "peer-reviewer-vscode",
+  "displayName": "Peer Reviewer",
   "description": "AI-powered code review findings displayed inline in VS Code",
   "version": "0.1.0",
-  "publisher": "reviewnotes",
+  "publisher": "peerreviewer",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -14,127 +14,127 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "review-notes",
-          "title": "Review Notes",
+          "id": "peer-reviewer",
+          "title": "Peer Reviewer",
           "icon": "$(eye)"
         }
       ]
     },
     "views": {
-      "review-notes": [
+      "peer-reviewer": [
         {
           "type": "webview",
-          "id": "reviewNotes.panel",
-          "name": "Review Notes"
+          "id": "peerReviewer.panel",
+          "name": "Peer Reviewer"
         }
       ]
     },
     "commands": [
       {
-        "command": "reviewNotes.reanalyseChanges",
-        "title": "Review Notes: Re-analyse Changes"
+        "command": "peerReviewer.reanalyseChanges",
+        "title": "Peer Reviewer: Re-analyse Changes"
       },
       {
-        "command": "reviewNotes.reanalyseProject",
-        "title": "Review Notes: Re-analyse Project"
+        "command": "peerReviewer.reanalyseProject",
+        "title": "Peer Reviewer: Re-analyse Project"
       },
       {
-        "command": "reviewNotes.stopAnalysis",
-        "title": "Review Notes: Stop Analysis"
+        "command": "peerReviewer.stopAnalysis",
+        "title": "Peer Reviewer: Stop Analysis"
       },
       {
-        "command": "reviewNotes.testProvider",
-        "title": "Review Notes: Test Provider Connection"
+        "command": "peerReviewer.testProvider",
+        "title": "Peer Reviewer: Test Provider Connection"
       }
     ],
     "configuration": {
-      "title": "Review Notes",
+      "title": "Peer Reviewer",
       "properties": {
-        "reviewNotes.provider": {
+        "peerReviewer.provider": {
           "type": "string",
           "enum": ["claude", "codex", "llama-cpp", "opencode", "kiro"],
           "default": "claude",
           "description": "Active LLM provider for code review"
         },
-        "reviewNotes.providers.codex.command": {
+        "peerReviewer.providers.codex.command": {
           "type": "string",
           "default": "codex",
           "description": "Codex CLI command"
         },
-        "reviewNotes.providers.codex.args": {
+        "peerReviewer.providers.codex.args": {
           "type": "array",
           "items": { "type": "string" },
           "default": ["exec", "--json"],
           "description": "Codex CLI arguments"
         },
-        "reviewNotes.providers.claude.command": {
+        "peerReviewer.providers.claude.command": {
           "type": "string",
           "default": "claude",
           "description": "Claude CLI command"
         },
-        "reviewNotes.providers.claude.args": {
+        "peerReviewer.providers.claude.args": {
           "type": "array",
           "items": { "type": "string" },
           "default": ["--print"],
           "description": "Claude CLI arguments"
         },
-        "reviewNotes.providers.opencode.command": {
+        "peerReviewer.providers.opencode.command": {
           "type": "string",
           "default": "opencode",
           "description": "OpenCode CLI command"
         },
-        "reviewNotes.providers.opencode.args": {
+        "peerReviewer.providers.opencode.args": {
           "type": "array",
           "items": { "type": "string" },
           "default": ["--print"],
           "description": "OpenCode CLI arguments"
         },
-        "reviewNotes.providers.kiro.command": {
+        "peerReviewer.providers.kiro.command": {
           "type": "string",
           "default": "kiro",
           "description": "Kiro CLI command"
         },
-        "reviewNotes.providers.kiro.args": {
+        "peerReviewer.providers.kiro.args": {
           "type": "array",
           "items": { "type": "string" },
           "default": ["--print"],
           "description": "Kiro CLI arguments"
         },
-        "reviewNotes.providers.llamaCpp.baseUrl": {
+        "peerReviewer.providers.llamaCpp.baseUrl": {
           "type": "string",
           "default": "http://127.0.0.1:8080",
           "description": "llama.cpp server base URL"
         },
-        "reviewNotes.systemPrompt.mode": {
+        "peerReviewer.systemPrompt.mode": {
           "type": "string",
           "enum": ["default", "append", "replace"],
           "default": "default",
           "description": "System prompt mode"
         },
-        "reviewNotes.systemPrompt.text": {
+        "peerReviewer.systemPrompt.text": {
           "type": "string",
           "default": "",
           "description": "Custom system prompt text (used in append/replace mode). For multi-line prompts, edit this in settings.json directly.",
           "editPresentation": "multilineText"
         },
-        "reviewNotes.autoAnalyse.trigger": {
+        "peerReviewer.autoAnalyse.trigger": {
           "type": "string",
           "enum": ["disabled", "on-save", "periodically"],
           "default": "disabled",
           "description": "When to automatically re-analyse"
         },
-        "reviewNotes.autoAnalyse.intervalMinutes": {
+        "peerReviewer.autoAnalyse.intervalMinutes": {
           "type": "number",
           "default": 5,
           "minimum": 1,
           "description": "Interval in minutes for periodic auto-analyse"
         },
-        "reviewNotes.maxFilesPerRun": {
+        "peerReviewer.maxFilesPerRun": {
           "type": ["number", "null"],
           "default": null,
           "description": "Maximum files to analyse per run (null for unlimited)"
         },
-        "reviewNotes.debugLogging": {
+        "peerReviewer.debugLogging": {
           "type": "boolean",
           "default": false,
           "description": "Enable debug logging to the output channel"

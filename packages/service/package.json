@@ -1,18 +1,18 @@
 {
-  "name": "@review-notes/service",
+  "name": "@peer-reviewer/service",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "review-notes-service": "dist/index.js"
+    "peer-reviewer-service": "dist/index.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "build:cjs": "tsc -p tsconfig.cjs.json",
-    "package": "npm run build:cjs && pkg dist-cjs/index.js --config pkg.config.json --output ../../dist-bin/review-notes-service"
+    "package": "npm run build:cjs && pkg dist-cjs/index.js --config pkg.config.json --output ../../dist-bin/peer-reviewer-service"
   },
   "dependencies": {
     "chokidar": "^3.6.0",

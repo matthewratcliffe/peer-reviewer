@@ -2,10 +2,10 @@
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011"
                  xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="com.reviewnotes.visualstudio" Version="1.0.0" Language="en-US"
-              Publisher="Review Notes" />
-    <DisplayName>Review Notes</DisplayName>
-    <Description xml:space="preserve">AI-powered code review findings displayed in a tool window. Connects to a local review-notes-service daemon via named pipe.</Description>
+    <Identity Id="com.peerreviewer.visualstudio" Version="1.0.0" Language="en-US"
+              Publisher="Peer Reviewer" />
+    <DisplayName>Peer Reviewer</DisplayName>
+    <Description xml:space="preserve">AI-powered code review findings displayed in a tool window. Connects to a local peer-reviewer-service daemon via named pipe.</Description>
     <MoreInfo>https://www.matthewratcliffe.com.au</MoreInfo>
     <Tags>code review, AI, analysis, findings</Tags>
   </Metadata>
