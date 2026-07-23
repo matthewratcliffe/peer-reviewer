@@ -280,11 +280,11 @@ jobs:
 
       - name: Restore packages
         working-directory: ides/visual-studio
-        run: msbuild ReviewNotes.sln /t:Restore /p:Configuration=Release
+        run: msbuild ReviewNotes.sln /t:Restore
 
       - name: Build VSIX
         working-directory: ides/visual-studio
-        run: msbuild ReviewNotes.sln /p:Configuration=Release /p:DeployExtension=false /p:CreateVsixContainer=true
+        run: msbuild ReviewNotes.sln /p:Configuration=Release /p:DeployExtension=false
 
       - name: Find VSIX
         id: find-vsix
