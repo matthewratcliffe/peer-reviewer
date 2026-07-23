@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import type { Finding } from "./ipc-client";
-export declare class ReviewNotesWebviewProvider implements vscode.WebviewViewProvider {
+export declare class PeerReviewerWebviewProvider implements vscode.WebviewViewProvider {
     private readonly extensionUri;
-    static readonly viewType = "reviewNotes.panel";
+    static readonly viewType = "peerReviewer.panel";
     private view?;
     private repoRoot;
     private findings;
@@ -11,6 +11,7 @@ export declare class ReviewNotesWebviewProvider implements vscode.WebviewViewPro
     updateFindings(findings: Finding[]): void;
     showProcessing(text: string): void;
     hideProcessing(): void;
+    showError(message: string): void;
     resolveWebviewView(webviewView: vscode.WebviewView, _context: vscode.WebviewViewResolveContext, _token: vscode.CancellationToken): void;
     private sendFindingsToWebview;
     private postMessage;

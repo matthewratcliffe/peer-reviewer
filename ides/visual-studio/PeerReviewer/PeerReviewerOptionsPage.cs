@@ -100,6 +100,11 @@ namespace PeerReviewer
         public int MaxFilesPerRun { get; set; } = 0;
 
         [Category("Behaviour")]
+        [DisplayName("Coding Standards Folder")]
+        [Description("Path to a folder of Markdown (.md) files containing organisation coding standards. All .md files are concatenated and included in the review prompt. Leave empty to disable.")]
+        public string CodingStandardsFolder { get; set; } = "";
+
+        [Category("Behaviour")]
         [DisplayName("Block Pre-Commit on Findings")]
         [Description("Whether the pre-commit hook should block when there are findings")]
         public bool BlockOnFindings { get; set; } = true;
@@ -190,6 +195,7 @@ namespace PeerReviewer
             }
 
             MaxFilesPerRun = config.MaxFilesPerRun ?? 0;
+            CodingStandardsFolder = config.CodingStandardsFolder ?? "";
             BlockOnFindings = config.PreCommit?.BlockOnFindings ?? true;
             DebugLogging = config.DebugLogging;
         }
@@ -241,6 +247,7 @@ namespace PeerReviewer
                     IntervalMinutes = AutoAnalyseIntervalMinutes
                 },
                 MaxFilesPerRun = MaxFilesPerRun > 0 ? MaxFilesPerRun : (int?)null,
+                CodingStandardsFolder = string.IsNullOrWhiteSpace(CodingStandardsFolder) ? null : CodingStandardsFolder,
                 DebugLogging = DebugLogging
             };
         }

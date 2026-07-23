@@ -258,6 +258,7 @@ function buildConfigFromSettings(): PeerReviewerConfig {
       intervalMinutes: cfg.get("autoAnalyse.intervalMinutes", 5),
     },
     maxFilesPerRun: cfg.get("maxFilesPerRun", null),
+    codingStandardsFolder: cfg.get<string | null>("codingStandardsFolder", null),
     debugLogging: cfg.get("debugLogging", false),
   };
 }

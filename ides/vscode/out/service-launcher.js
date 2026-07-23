@@ -37,7 +37,7 @@ exports.ensureRunningAndRegister = ensureRunningAndRegister;
 const path = __importStar(require("path"));
 const child_process = __importStar(require("child_process"));
 function getServiceBinaryPath(extensionPath) {
-    const binName = process.platform === "win32" ? "review-notes-service.exe" : "review-notes-service";
+    const binName = process.platform === "win32" ? "peer-reviewer-service.exe" : "peer-reviewer-service";
     return path.join(extensionPath, "bin", binName);
 }
 function sleep(ms) {
@@ -75,6 +75,6 @@ async function ensureRunningAndRegister(client, repoPath, extensionPath, output)
             // not ready yet
         }
     }
-    throw new Error("Failed to start review-notes service within 15 seconds");
+    throw new Error("Failed to start peer-reviewer service within 15 seconds");
 }
 //# sourceMappingURL=service-launcher.js.map

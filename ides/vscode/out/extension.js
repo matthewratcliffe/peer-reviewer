@@ -43,15 +43,15 @@ let pollInterval;
 let autoAnalyseInterval;
 let saveWatcher;
 async function activate(context) {
-    const output = vscode.window.createOutputChannel("Review Notes");
+    const output = vscode.window.createOutputChannel("Peer Reviewer");
     context.subscriptions.push(output);
     const client = new ipc_client_1.IpcClient();
-    const provider = new webview_provider_1.ReviewNotesWebviewProvider(context.extensionUri);
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider(webview_provider_1.ReviewNotesWebviewProvider.viewType, provider));
+    const provider = new webview_provider_1.PeerReviewerWebviewProvider(context.extensionUri);
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(webview_provider_1.PeerReviewerWebviewProvider.viewType, provider));
     // Determine repo path from workspace
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders || workspaceFolders.length === 0) {
-        output.appendLine("No workspace folder open, Review Notes inactive.");
+        output.appendLine("No workspace folder open, Peer Reviewer inactive.");
         return;
     }
     const repoPath = workspaceFolders[0].uri.fsPath;
@@ -62,19 +62,22 @@ async function activate(context) {
     catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         output.appendLine(`Failed to connect to service: ${msg}`);
-        vscode.window.showErrorMessage(`Review Notes: ${msg}`);
+        provider.showError(`Unable to connect to Peer Reviewer service: ${msg}`);
+        vscode.window.showErrorMessage(`Peer Reviewer: ${msg}`);
         return;
     }
     provider.setRepoRoot(repoRoot);
-    output.appendLine(`Review Notes active for repo: ${repoRoot}`);
+    output.appendLine(`Peer Reviewer active for repo: ${repoRoot}`);
+    // Sync VS Code settings to service
+    await syncConfigToService(client, output);
     // Register commands
-    context.subscriptions.push(vscode.commands.registerCommand("reviewNotes.reanalyseChanges", async () => {
+    context.subscriptions.push(vscode.commands.registerCommand("peerReviewer.reanalyseChanges", async () => {
         await runAnalysis(client, repoRoot, "changes", provider, output);
     }));
-    context.subscriptions.push(vscode.commands.registerCommand("reviewNotes.reanalyseProject", async () => {
+    context.subscriptions.push(vscode.commands.registerCommand("peerReviewer.reanalyseProject", async () => {
         await runAnalysis(client, repoRoot, "project", provider, output);
     }));
-    context.subscriptions.push(vscode.commands.registerCommand("reviewNotes.stopAnalysis", async () => {
+    context.subscriptions.push(vscode.commands.registerCommand("peerReviewer.stopAnalysis", async () => {
         try {
             await client.cancelAnalysis(repoRoot);
             provider.hideProcessing();
@@ -84,7 +87,7 @@ async function activate(context) {
             output.appendLine(`Stop analysis error: ${msg}`);
         }
     }));
-    context.subscriptions.push(vscode.commands.registerCommand("reviewNotes.dismiss", async (findingId) => {
+    context.subscriptions.push(vscode.commands.registerCommand("peerReviewer.dismiss", async (findingId) => {
         try {
             await client.dismissFinding(findingId);
             await refreshFindings(client, repoRoot, provider, output);
@@ -92,6 +95,22 @@ async function activate(context) {
         catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             output.appendLine(`Dismiss error: ${msg}`);
+        }
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand("peerReviewer.testProvider", async () => {
+        const config = buildConfigFromSettings();
+        try {
+            const result = await client.testProvider(config);
+            if (result.ok) {
+                vscode.window.showInformationMessage(`Peer Reviewer: ${config.activeProvider} provider connected successfully.`);
+            }
+            else {
+                vscode.window.showErrorMessage(`Peer Reviewer: ${config.activeProvider} provider test failed — ${result.error}`);
+            }
+        }
+        catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            vscode.window.showErrorMessage(`Peer Reviewer: Provider test error — ${msg}`);
         }
     }));
     // Poll findings every 2 seconds
@@ -103,8 +122,11 @@ async function activate(context) {
     // Set up auto-analyse
     setupAutoAnalyse(context, client, repoRoot, provider, output);
     // Re-setup auto-analyse when config changes
-    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((e) => {
-        if (e.affectsConfiguration("reviewNotes.autoAnalyse")) {
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(async (e) => {
+        if (e.affectsConfiguration("peerReviewer")) {
+            await syncConfigToService(client, output);
+        }
+        if (e.affectsConfiguration("peerReviewer.autoAnalyse")) {
             setupAutoAnalyse(context, client, repoRoot, provider, output);
         }
     }));
@@ -144,7 +166,7 @@ async function runAnalysis(client, repoRoot, scope, provider, output) {
     catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         output.appendLine(`Analysis error: ${msg}`);
-        vscode.window.showWarningMessage(`Review Notes analysis failed: ${msg}`);
+        vscode.window.showWarningMessage(`Peer Reviewer analysis failed: ${msg}`);
     }
     finally {
         clearInterval(progressPoll);
@@ -159,8 +181,11 @@ async function refreshFindings(client, repoRoot, provider, output) {
     }
     catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        if (vscode.workspace.getConfiguration("reviewNotes").get("debugLogging")) {
+        if (vscode.workspace.getConfiguration("peerReviewer").get("debugLogging")) {
             output.appendLine(`Findings poll error: ${msg}`);
+        }
+        if (msg.includes("ECONNREFUSED") || msg.includes("ENOENT") || msg.includes("timed out")) {
+            provider.showError(`Service connection lost: ${msg}`);
         }
     }
 }
@@ -174,7 +199,7 @@ function setupAutoAnalyse(context, client, repoRoot, provider, output) {
         saveWatcher.dispose();
         saveWatcher = undefined;
     }
-    const config = vscode.workspace.getConfiguration("reviewNotes");
+    const config = vscode.workspace.getConfiguration("peerReviewer");
     const trigger = config.get("autoAnalyse.trigger", "disabled");
     const intervalMinutes = config.get("autoAnalyse.intervalMinutes", 5);
     if (trigger === "on-save") {
@@ -189,6 +214,56 @@ function setupAutoAnalyse(context, client, repoRoot, provider, output) {
             output.appendLine("Auto-analyse triggered by timer");
             await runAnalysis(client, repoRoot, "changes", provider, output);
         }, intervalMinutes * 60 * 1000);
+    }
+}
+function buildConfigFromSettings() {
+    const cfg = vscode.workspace.getConfiguration("peerReviewer");
+    return {
+        activeProvider: cfg.get("provider", "claude"),
+        providers: {
+            codex: {
+                command: cfg.get("providers.codex.command", "codex"),
+                args: cfg.get("providers.codex.args", ["exec", "--json"]),
+            },
+            llamaCpp: {
+                baseUrl: cfg.get("providers.llamaCpp.baseUrl", "http://127.0.0.1:8080"),
+            },
+            claude: {
+                command: cfg.get("providers.claude.command", "claude"),
+                args: cfg.get("providers.claude.args", ["--print"]),
+            },
+            opencode: {
+                command: cfg.get("providers.opencode.command", "opencode"),
+                args: cfg.get("providers.opencode.args", ["--print"]),
+            },
+            kiro: {
+                command: cfg.get("providers.kiro.command", "kiro"),
+                args: cfg.get("providers.kiro.args", ["--print"]),
+            },
+        },
+        systemPrompt: {
+            mode: cfg.get("systemPrompt.mode", "default"),
+            text: cfg.get("systemPrompt.text", ""),
+        },
+        preCommit: { blockOnFindings: true },
+        autoAnalyse: {
+            trigger: cfg.get("autoAnalyse.trigger", "disabled"),
+            intervalMinutes: cfg.get("autoAnalyse.intervalMinutes", 5),
+        },
+        maxFilesPerRun: cfg.get("maxFilesPerRun", null),
+        codingStandardsFolder: cfg.get("codingStandardsFolder", null),
+        debugLogging: cfg.get("debugLogging", false),
+    };
+}
+async function syncConfigToService(client, output) {
+    try {
+        const config = buildConfigFromSettings();
+        await client.updateConfig(config);
+        output.appendLine("Settings synced to service");
+    }
+    catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        output.appendLine(`Failed to sync settings to service: ${msg}`);
     }
 }
 //# sourceMappingURL=extension.js.map

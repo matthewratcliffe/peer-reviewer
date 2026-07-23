@@ -40,12 +40,12 @@ const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 function resolveIpcPath() {
     if (process.platform === "win32") {
-        return `\\\\.\\pipe\\review-notes-${os.userInfo().username}`;
+        return `\\\\.\\pipe\\peer-reviewer-${os.userInfo().username}`;
     }
-    return path.join(os.homedir(), ".review-notes", "service.sock");
+    return path.join(os.homedir(), ".peer-reviewer", "service.sock");
 }
 function readToken() {
-    const tokenPath = path.join(os.homedir(), ".review-notes", "session.token");
+    const tokenPath = path.join(os.homedir(), ".peer-reviewer", "session.token");
     try {
         return fs.readFileSync(tokenPath, "utf-8").trim();
     }
@@ -68,7 +68,7 @@ class IpcClient {
                 const lines = [
                     `${method} ${urlPath} HTTP/1.1`,
                     `Host: localhost`,
-                    `x-review-notes-token: ${this.token}`,
+                    `x-peer-reviewer-token: ${this.token}`,
                     `Content-Type: application/json`,
                     `Content-Length: ${Buffer.byteLength(bodyStr)}`,
                     `Connection: close`,
@@ -128,7 +128,7 @@ class IpcClient {
         if (resp.statusCode !== 200) {
             throw new Error(`getAllFindings failed (${resp.statusCode}): ${resp.body}`);
         }
-        return JSON.parse(resp.body);
+        return JSON.parse(resp.body).findings;
     }
     async analyzeChanges(repoRoot) {
         const resp = await this.request("POST", `/analyze?repo=${encodeURIComponent(repoRoot)}`, { scope: "changes" });

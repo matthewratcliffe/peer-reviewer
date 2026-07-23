@@ -10,7 +10,7 @@ import type { Provider } from "./types.js";
 // Exactly one provider is active at a time (config.activeProvider); the others' settings
 // are still persisted in config.providers so switching back doesn't lose them.
 export function buildProviderRegistry(config: Config): Provider[] {
-  const systemPrompt = resolveSystemPrompt(config.systemPrompt);
+  const systemPrompt = resolveSystemPrompt(config.systemPrompt, config.codingStandardsFolder);
   const debug = config.debugLogging;
 
   switch (config.activeProvider) {

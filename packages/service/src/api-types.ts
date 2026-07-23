@@ -55,6 +55,7 @@ export interface PeerReviewerConfig {
   systemPrompt: { mode: "default" | "append" | "replace"; text: string };
   preCommit: { blockOnFindings: boolean };
   autoAnalyse: { trigger: "disabled" | "on-save" | "periodically"; intervalMinutes: number };
+  codingStandardsFolder: string | null;
   maxFilesPerRun: number | null;
   debugLogging: boolean;
 }

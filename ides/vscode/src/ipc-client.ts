@@ -49,6 +49,7 @@ export interface PeerReviewerConfig {
   preCommit: { blockOnFindings: boolean };
   autoAnalyse: { trigger: "disabled" | "on-save" | "periodically"; intervalMinutes: number };
   maxFilesPerRun: number | null;
+  codingStandardsFolder: string | null;
   debugLogging: boolean;
 }
 

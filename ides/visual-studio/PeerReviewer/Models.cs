@@ -190,6 +190,9 @@ namespace PeerReviewer
         [JsonPropertyName("maxFilesPerRun")]
         public int? MaxFilesPerRun { get; set; }
 
+        [JsonPropertyName("codingStandardsFolder")]
+        public string CodingStandardsFolder { get; set; }
+
         [JsonPropertyName("debugLogging")]
         public bool DebugLogging { get; set; }
     }

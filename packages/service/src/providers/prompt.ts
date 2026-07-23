@@ -1,3 +1,6 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
 export const REVIEW_CATEGORIES = [
   "correctness",
   "security",
@@ -42,15 +45,38 @@ export interface SystemPromptConfig {
   text: string;
 }
 
-export function resolveSystemPrompt(config: SystemPromptConfig): string {
+export function loadCodingStandards(folder: string | null): string {
+  if (!folder) return "";
+  try {
+    const files = readdirSync(folder)
+      .filter((f) => f.toLowerCase().endsWith(".md"))
+      .sort();
+    if (files.length === 0) return "";
+    return files
+      .map((f) => readFileSync(join(folder, f), "utf-8"))
+      .join("\n\n");
+  } catch {
+    return "";
+  }
+}
+
+export function resolveSystemPrompt(config: SystemPromptConfig, codingStandardsFolder?: string | null): string {
+  let prompt: string;
   switch (config.mode) {
     case "replace":
-      return config.text;
+      prompt = config.text;
+      break;
     case "append":
-      return `${REVIEW_SYSTEM_PROMPT}\n\n${config.text}`;
+      prompt = `${REVIEW_SYSTEM_PROMPT}\n\n${config.text}`;
+      break;
     default:
-      return REVIEW_SYSTEM_PROMPT;
+      prompt = REVIEW_SYSTEM_PROMPT;
   }
+  const standards = loadCodingStandards(codingStandardsFolder ?? null);
+  if (standards) {
+    prompt += `\n\n--- Organisation Coding Standards ---\nThe following coding standards MUST also be evaluated. Flag violations as category "best-practice" unless a more specific category applies.\n\n${standards}`;
+  }
+  return prompt;
 }
 
 export function buildReviewPrompt(file: string, diff: string, fullContent: string): string {

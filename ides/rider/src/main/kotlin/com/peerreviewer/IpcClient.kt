@@ -50,6 +50,7 @@ data class PeerReviewerConfig(
     val systemPrompt: SystemPromptConfig,
     val preCommit: PreCommitConfig,
     val autoAnalyse: AutoAnalyseConfig?,
+    val codingStandardsFolder: String?,
     val maxFilesPerRun: Int?,
     val debugLogging: Boolean?
 )

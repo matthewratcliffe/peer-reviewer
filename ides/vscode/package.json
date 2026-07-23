@@ -134,6 +134,11 @@
           "default": null,
           "description": "Maximum files to analyse per run (null for unlimited)"
         },
+        "peerReviewer.codingStandardsFolder": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Path to a folder of Markdown (.md) files containing organisation coding standards. All .md files in this folder are concatenated and included in the review prompt."
+        },
         "peerReviewer.debugLogging": {
           "type": "boolean",
           "default": false,

@@ -14,7 +14,7 @@ export interface Finding {
     dismissed: boolean;
     createdAt: string;
 }
-export interface ReviewNotesConfig {
+export interface PeerReviewerConfig {
     activeProvider: ProviderId;
     providers: {
         codex: {
@@ -49,6 +49,7 @@ export interface ReviewNotesConfig {
         intervalMinutes: number;
     };
     maxFilesPerRun: number | null;
+    codingStandardsFolder: string | null;
     debugLogging: boolean;
 }
 export interface AnalysisProgress {
@@ -75,9 +76,9 @@ export declare class IpcClient {
     analyzeProject(repoRoot: string): Promise<void>;
     getAnalysisProgress(repoRoot: string): Promise<AnalysisProgress>;
     cancelAnalysis(repoRoot: string): Promise<void>;
-    getConfig(): Promise<ReviewNotesConfig>;
-    updateConfig(config: ReviewNotesConfig): Promise<void>;
-    testProvider(config: ReviewNotesConfig): Promise<{
+    getConfig(): Promise<PeerReviewerConfig>;
+    updateConfig(config: PeerReviewerConfig): Promise<void>;
+    testProvider(config: PeerReviewerConfig): Promise<{
         ok: boolean;
         error?: string;
     }>;

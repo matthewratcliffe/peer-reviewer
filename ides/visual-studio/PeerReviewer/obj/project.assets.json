@@ -6880,11 +6880,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "d:\\Repos\\peer-review\\ides\\visual-studio\\ReviewNotes\\ReviewNotes.csproj",
-      "projectName": "ReviewNotes",
-      "projectPath": "d:\\Repos\\peer-review\\ides\\visual-studio\\ReviewNotes\\ReviewNotes.csproj",
+      "projectUniqueName": "d:\\Repos\\peer-review\\ides\\visual-studio\\PeerReviewer\\PeerReviewer.csproj",
+      "projectName": "PeerReviewer",
+      "projectPath": "d:\\Repos\\peer-review\\ides\\visual-studio\\PeerReviewer\\PeerReviewer.csproj",
       "packagesPath": "C:\\Users\\matt\\.nuget\\packages\\",
-      "outputPath": "d:\\Repos\\peer-review\\ides\\visual-studio\\ReviewNotes\\obj\\",
+      "outputPath": "d:\\Repos\\peer-review\\ides\\visual-studio\\PeerReviewer\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",

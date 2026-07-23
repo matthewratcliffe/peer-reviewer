@@ -53,6 +53,7 @@ export const ConfigSchema = z.object({
       intervalMinutes: z.number().min(1).default(5),
     })
     .default({}),
+  codingStandardsFolder: z.string().nullable().default(null),
   maxFilesPerRun: z.number().int().min(1).nullable().default(null),
   debugLogging: z.boolean().default(false),
 });

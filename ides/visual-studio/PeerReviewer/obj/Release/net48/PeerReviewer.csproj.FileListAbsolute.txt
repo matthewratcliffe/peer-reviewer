@@ -1,0 +1,7 @@
+d:\Repos\peer-review\ides\visual-studio\PeerReviewer\obj\Release\net48\PeerReviewer.csproj.AssemblyReference.cache
+d:\Repos\peer-review\ides\visual-studio\PeerReviewer\obj\Release\net48\PeerReviewer_MarkupCompile.cache
+d:\Repos\peer-review\ides\visual-studio\PeerReviewer\obj\Release\net48\PeerReviewerPackage.cto
+d:\Repos\peer-review\ides\visual-studio\PeerReviewer\obj\Release\net48\VSCT.read.1.tlog
+d:\Repos\peer-review\ides\visual-studio\PeerReviewer\obj\Release\net48\VSCT.write.1.tlog
+d:\Repos\peer-review\ides\visual-studio\PeerReviewer\obj\Release\net48\_EmptyResource.resources
+d:\Repos\peer-review\ides\visual-studio\PeerReviewer\obj\Release\net48\PeerReviewer.csproj.GenerateResource.cache

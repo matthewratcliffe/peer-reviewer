@@ -54,8 +54,8 @@
     </Content>
   </ItemGroup>
 
-  <Import Project="$(PkgMicrosoft_VSSDK_BuildTools)\tools\vssdk\Microsoft.VsSDK.targets" Condition="Exists('$(PkgMicrosoft_VSSDK_BuildTools)\tools\vssdk\Microsoft.VsSDK.targets')" />
+  <Import Project="$(PkgMicrosoft_VSSDK_BuildTools)\tools\vssdk\Microsoft.VsSDK.targets" />
 
-  <Target Name="RunCreateVsixContainer" AfterTargets="Build" DependsOnTargets="CreateVsixContainer" />
+  <Target Name="RunCreateVsixContainer" AfterTargets="Build" DependsOnTargets="CreatePkgDef;CreateVsixContainer" />
 
 </Project>

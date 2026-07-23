@@ -33,10 +33,10 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ReviewNotesWebviewProvider = void 0;
+exports.PeerReviewerWebviewProvider = void 0;
 const vscode = __importStar(require("vscode"));
 const notes_1 = require("./notes");
-class ReviewNotesWebviewProvider {
+class PeerReviewerWebviewProvider {
     constructor(extensionUri) {
         this.extensionUri = extensionUri;
         this.repoRoot = "";
@@ -54,6 +54,9 @@ class ReviewNotesWebviewProvider {
     }
     hideProcessing() {
         this.postMessage({ type: "processing-done" });
+    }
+    showError(message) {
+        this.postMessage({ type: "error", message });
     }
     resolveWebviewView(webviewView, _context, _token) {
         this.view = webviewView;
@@ -89,7 +92,7 @@ class ReviewNotesWebviewProvider {
             }
             case "dismiss": {
                 const findingId = msg.findingId;
-                vscode.commands.executeCommand("reviewNotes.dismiss", findingId);
+                vscode.commands.executeCommand("peerReviewer.dismiss", findingId);
                 break;
             }
             case "load-note": {
@@ -105,15 +108,19 @@ class ReviewNotesWebviewProvider {
                 break;
             }
             case "reanalyse-changes": {
-                vscode.commands.executeCommand("reviewNotes.reanalyseChanges");
+                vscode.commands.executeCommand("peerReviewer.reanalyseChanges");
                 break;
             }
             case "reanalyse-project": {
-                vscode.commands.executeCommand("reviewNotes.reanalyseProject");
+                vscode.commands.executeCommand("peerReviewer.reanalyseProject");
                 break;
             }
             case "stop-analysis": {
-                vscode.commands.executeCommand("reviewNotes.stopAnalysis");
+                vscode.commands.executeCommand("peerReviewer.stopAnalysis");
+                break;
+            }
+            case "test-connection": {
+                vscode.commands.executeCommand("peerReviewer.testProvider");
                 break;
             }
         }
@@ -272,6 +279,7 @@ td.sev-cell { font-weight: bold; text-transform: uppercase; font-size: 10px; }
   <label><select id="filter-issue"><option value="all">All Issues</option></select></label>
   <label><select id="group-by"><option value="none">No Grouping</option><option value="severity">Group by Severity</option><option value="file">Group by File</option><option value="issue">Group by Issue</option></select></label>
   <button id="btn-detail" title="Toggle detail panel">Detail</button>
+  <button id="btn-test-connection" title="Test connection to the configured LLM provider">Test Connection</button>
   <div class="spacer"></div>
   <div class="logo"><a href="https://www.matthewratcliffe.com.au" title="matthewratcliffe.com.au">MR</a></div>
 </div>
@@ -316,6 +324,7 @@ td.sev-cell { font-weight: bold; text-transform: uppercase; font-size: 10px; }
   const btnProject = document.getElementById('btn-project');
   const btnStop = document.getElementById('btn-stop');
   const btnDetail = document.getElementById('btn-detail');
+  const btnTestConnection = document.getElementById('btn-test-connection');
   const filterSeverity = document.getElementById('filter-severity');
   const filterIssue = document.getElementById('filter-issue');
   const groupBy = document.getElementById('group-by');
@@ -331,6 +340,7 @@ td.sev-cell { font-weight: bold; text-transform: uppercase; font-size: 10px; }
   btnChanges.addEventListener('click', () => vscode.postMessage({ type: 'reanalyse-changes' }));
   btnProject.addEventListener('click', () => vscode.postMessage({ type: 'reanalyse-project' }));
   btnStop.addEventListener('click', () => vscode.postMessage({ type: 'stop-analysis' }));
+  btnTestConnection.addEventListener('click', () => vscode.postMessage({ type: 'test-connection' }));
   overlayStop.addEventListener('click', () => vscode.postMessage({ type: 'stop-analysis' }));
   btnDetail.addEventListener('click', () => {
     detailVisible = !detailVisible;
@@ -366,6 +376,12 @@ td.sev-cell { font-weight: bold; text-transform: uppercase; font-size: 10px; }
         break;
       case 'processing-done':
         overlay.classList.remove('visible');
+        break;
+      case 'error':
+        loadingState.textContent = msg.message || 'Failed to connect to service';
+        loadingState.style.display = '';
+        loadingState.style.color = 'var(--vscode-errorForeground)';
+        table.style.display = 'none';
         break;
       case 'note-loaded':
         if (selectedFinding && selectedFinding.id === msg.findingId) {
@@ -494,6 +510,6 @@ td.sev-cell { font-weight: bold; text-transform: uppercase; font-size: 10px; }
 </html>`;
     }
 }
-exports.ReviewNotesWebviewProvider = ReviewNotesWebviewProvider;
-ReviewNotesWebviewProvider.viewType = "reviewNotes.panel";
+exports.PeerReviewerWebviewProvider = PeerReviewerWebviewProvider;
+PeerReviewerWebviewProvider.viewType = "peerReviewer.panel";
 //# sourceMappingURL=webview-provider.js.map

@@ -83,6 +83,7 @@ class PeerReviewerConfigurable : Configurable {
     private val autoAnalyseCombo = ComboBox(arrayOf("Off", "On Save", "Periodically"))
     private val autoAnalyseIntervalField = JBTextField("5")
     private val maxFilesPerRunField = JBTextField("")
+    private val codingStandardsFolderField = JBTextField("")
 
     private val debugLoggingCheckBox = JBCheckBox("Enable debug logging (log all LLM requests/responses)")
 
@@ -132,6 +133,7 @@ class PeerReviewerConfigurable : Configurable {
             .addLabeledComponent("Auto analyse on:", autoAnalyseCombo)
             .addLabeledComponent("Interval (minutes):", autoAnalyseIntervalField)
             .addLabeledComponent("Max files per run:", maxFilesPerRunField)
+            .addLabeledComponent("Coding standards folder:", codingStandardsFolderField)
             .addSeparator()
             .addComponent(debugLoggingCheckBox)
             .panel
@@ -259,6 +261,7 @@ class PeerReviewerConfigurable : Configurable {
                 updateAutoAnalyseVisibility()
 
                 maxFilesPerRunField.text = config.maxFilesPerRun?.toString() ?: ""
+                codingStandardsFolderField.text = config.codingStandardsFolder ?: ""
 
                 debugLoggingCheckBox.isSelected = config.debugLogging ?: false
             }
@@ -310,6 +313,7 @@ class PeerReviewerConfigurable : Configurable {
                 intervalMinutes = autoAnalyseIntervalField.text.toIntOrNull()?.coerceAtLeast(1) ?: 5
             ),
             maxFilesPerRun = maxFilesPerRunField.text.trim().toIntOrNull()?.coerceAtLeast(1),
+            codingStandardsFolder = codingStandardsFolderField.text.trim().ifEmpty { null },
             debugLogging = debugLoggingCheckBox.isSelected
         )
     }
