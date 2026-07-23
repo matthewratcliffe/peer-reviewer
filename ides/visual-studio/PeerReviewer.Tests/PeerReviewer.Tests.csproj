@@ -11,10 +11,12 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
     <PackageReference Include="xunit" Version="2.7.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.7" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
+  <!-- Compile Models.cs directly — it has no VS SDK dependencies -->
   <ItemGroup>
-    <ProjectReference Include="..\PeerReviewer\PeerReviewer.csproj" />
+    <Compile Include="..\PeerReviewer\Models.cs" Link="Models.cs" />
   </ItemGroup>
 
 </Project>
