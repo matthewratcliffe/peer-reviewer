@@ -56,6 +56,5 @@
 
   <Import Project="$(PkgMicrosoft_VSSDK_BuildTools)\tools\vssdk\Microsoft.VsSDK.targets" />
 
-  <Target Name="RunCreateVsixContainer" AfterTargets="Build" DependsOnTargets="CreatePkgDef;CreateVsixContainer" />
 
 </Project>
