@@ -1,4 +1,5 @@
 {
   "targets": ["node18-win-x64"],
-  "outputPath": "../../dist-bin"
+  "outputPath": "../../dist-bin",
+  "assets": ["service-bin/**/*"]
 }

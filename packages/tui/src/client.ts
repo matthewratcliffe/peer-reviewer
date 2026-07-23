@@ -1,7 +1,7 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, accessSync, copyFileSync, mkdirSync, constants } from "node:fs";
 import { request } from "node:http";
 import { homedir, userInfo } from "node:os";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import { execFileSync, spawn } from "node:child_process";
 
 function resolveIpcPath(): string {
@@ -122,19 +122,58 @@ export function testProvider(config: PeerReviewerConfig): Promise<{ ok: boolean;
 
 export function findServiceBinary(): string | null {
   const binName = process.platform === "win32" ? "peer-reviewer-service.exe" : "peer-reviewer-service";
-  const locations = [
-    join(homedir(), ".peer-reviewer", binName),
-    join(process.cwd(), "node_modules", ".bin", binName),
-  ];
-  for (const loc of locations) {
-    try {
-      readFileSync(loc);
-      return loc;
-    } catch {
-      // not here
-    }
+  const installDir = join(homedir(), ".peer-reviewer");
+  const installedPath = join(installDir, binName);
+
+  // 1. Check if already installed to ~/.peer-reviewer/
+  if (fileExists(installedPath)) return installedPath;
+
+  // 2. Check next to the TUI executable
+  const exeDir = dirname(process.execPath);
+  const besidePath = join(exeDir, binName);
+  if (fileExists(besidePath)) return besidePath;
+
+  // 3. Check current working directory
+  const cwdPath = join(process.cwd(), binName);
+  if (fileExists(cwdPath)) return cwdPath;
+
+  // 4. Check node_modules/.bin
+  const nmPath = join(process.cwd(), "node_modules", ".bin", binName);
+  if (fileExists(nmPath)) return nmPath;
+
+  // 5. Check PATH
+  const pathDirs = (process.env.PATH || "").split(process.platform === "win32" ? ";" : ":");
+  for (const dir of pathDirs) {
+    const loc = join(dir, binName);
+    if (fileExists(loc)) return loc;
   }
+
+  // 6. Try to extract bundled service binary (pkg asset)
+  const bundledPath = join(__dirname, "..", "service-bin", binName);
+  try {
+    readFileSync(bundledPath);
+    // It exists in the pkg snapshot — extract to ~/.peer-reviewer/
+    mkdirSync(installDir, { recursive: true });
+    copyFileSync(bundledPath, installedPath);
+    if (process.platform !== "win32") {
+      const { chmodSync } = require("node:fs");
+      chmodSync(installedPath, 0o755);
+    }
+    return installedPath;
+  } catch {
+    // Not bundled or extraction failed
+  }
+
   return null;
+}
+
+function fileExists(path: string): boolean {
+  try {
+    accessSync(path, constants.F_OK);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function ensureServiceRunning(): boolean {

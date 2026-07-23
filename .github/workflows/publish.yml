@@ -91,6 +91,7 @@ jobs:
   # Build the TUI binary (standalone interactive terminal client)
   # ─────────────────────────────────────────────────────────────────────
   build-tui:
+    needs: build-service
     strategy:
       matrix:
         include:
@@ -98,14 +99,17 @@ jobs:
             binary: virtualpeerreview
             platform: linux
             pkg-target: node18-linux-x64
+            service-binary: peer-reviewer-service
           - os: macos-latest
             binary: virtualpeerreview
             platform: macos
             pkg-target: node18-macos-x64
+            service-binary: peer-reviewer-service
           - os: windows-latest
             binary: virtualpeerreview.exe
             platform: windows
             pkg-target: node18-win-x64
+            service-binary: peer-reviewer-service.exe
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -117,13 +121,23 @@ jobs:
 
       - run: npm ci
 
+      - name: Download service binary for bundling
+        uses: actions/download-artifact@v4
+        with:
+          name: service-binary-${{ matrix.platform }}
+          path: packages/tui/service-bin
+
+      - name: Make service binary executable
+        if: matrix.platform != 'windows'
+        run: chmod +x packages/tui/service-bin/${{ matrix.service-binary }}
+
       - name: Build CJS
         working-directory: packages/tui
         run: npm run build:cjs
 
       - name: Package binary
         working-directory: packages/tui
-        run: npx pkg dist-cjs/index.js --target ${{ matrix.pkg-target }} --output ../../dist-bin/${{ matrix.binary }}
+        run: npx pkg dist-cjs/index.js --target ${{ matrix.pkg-target }} --output ../../dist-bin/${{ matrix.binary }} --config pkg.config.json
 
       - uses: actions/upload-artifact@v4
         with:

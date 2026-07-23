@@ -81,20 +81,57 @@ function testProvider(config) {
 }
 function findServiceBinary() {
     const binName = process.platform === "win32" ? "peer-reviewer-service.exe" : "peer-reviewer-service";
-    const locations = [
-        (0, node_path_1.join)((0, node_os_1.homedir)(), ".peer-reviewer", binName),
-        (0, node_path_1.join)(process.cwd(), "node_modules", ".bin", binName),
-    ];
-    for (const loc of locations) {
-        try {
-            (0, node_fs_1.readFileSync)(loc);
+    const installDir = (0, node_path_1.join)((0, node_os_1.homedir)(), ".peer-reviewer");
+    const installedPath = (0, node_path_1.join)(installDir, binName);
+    // 1. Check if already installed to ~/.peer-reviewer/
+    if (fileExists(installedPath))
+        return installedPath;
+    // 2. Check next to the TUI executable
+    const exeDir = (0, node_path_1.dirname)(process.execPath);
+    const besidePath = (0, node_path_1.join)(exeDir, binName);
+    if (fileExists(besidePath))
+        return besidePath;
+    // 3. Check current working directory
+    const cwdPath = (0, node_path_1.join)(process.cwd(), binName);
+    if (fileExists(cwdPath))
+        return cwdPath;
+    // 4. Check node_modules/.bin
+    const nmPath = (0, node_path_1.join)(process.cwd(), "node_modules", ".bin", binName);
+    if (fileExists(nmPath))
+        return nmPath;
+    // 5. Check PATH
+    const pathDirs = (process.env.PATH || "").split(process.platform === "win32" ? ";" : ":");
+    for (const dir of pathDirs) {
+        const loc = (0, node_path_1.join)(dir, binName);
+        if (fileExists(loc))
             return loc;
+    }
+    // 6. Try to extract bundled service binary (pkg asset)
+    const bundledPath = (0, node_path_1.join)(__dirname, "..", "service-bin", binName);
+    try {
+        (0, node_fs_1.readFileSync)(bundledPath);
+        // It exists in the pkg snapshot — extract to ~/.peer-reviewer/
+        (0, node_fs_1.mkdirSync)(installDir, { recursive: true });
+        (0, node_fs_1.copyFileSync)(bundledPath, installedPath);
+        if (process.platform !== "win32") {
+            const { chmodSync } = require("node:fs");
+            chmodSync(installedPath, 0o755);
         }
-        catch {
-            // not here
-        }
+        return installedPath;
+    }
+    catch {
+        // Not bundled or extraction failed
     }
     return null;
+}
+function fileExists(path) {
+    try {
+        (0, node_fs_1.accessSync)(path, node_fs_1.constants.F_OK);
+        return true;
+    }
+    catch {
+        return false;
+    }
 }
 function ensureServiceRunning() {
     try {

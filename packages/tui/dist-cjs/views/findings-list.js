@@ -40,7 +40,7 @@ function renderFindingsList(state, rows, statusLine) {
     let output = "";
     // Header
     output += (0, terminal_js_1.moveTo)(1, 1) + (0, terminal_js_1.clearLine)();
-    output += `${terminal_js_1.BOLD}${terminal_js_1.FG_WHITE} Peer Reviewer ${terminal_js_1.RESET}${terminal_js_1.DIM} — ${state.findings.length} finding(s)${terminal_js_1.RESET}`;
+    output += `${terminal_js_1.BOLD}${terminal_js_1.FG_WHITE} Virtual Peer Review ${terminal_js_1.RESET}${terminal_js_1.DIM} — ${state.findings.length} finding(s)${terminal_js_1.RESET}`;
     output += (0, terminal_js_1.moveTo)(2, 1) + (0, terminal_js_1.clearLine)();
     output += `${terminal_js_1.DIM}${" ".repeat(cols)}${terminal_js_1.RESET}`;
     output += (0, terminal_js_1.moveTo)(3, 1) + (0, terminal_js_1.clearLine)();

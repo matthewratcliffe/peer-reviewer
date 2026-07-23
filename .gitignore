@@ -5,3 +5,6 @@ dist/
 build/
 .idea/
 .intellijPlatform/
+
+
+packages/tui/service-bin/
