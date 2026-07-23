@@ -1,0 +1,41 @@
+{
+  "name": "virtualpeerreview",
+  "version": "0.0.0",
+  "description": "Interactive terminal UI for Virtual Peer Review — browse findings, run analysis, and manage settings from the command line.",
+  "type": "module",
+  "bin": {
+    "virtualpeerreview": "dist/index.js"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./app": "./dist/app.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "virtual-peer-review",
+    "code-review",
+    "tui",
+    "terminal",
+    "cli"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/matthewratcliffe/peer-reviewer",
+    "directory": "packages/tui"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "package": "npm run build:cjs && npx pkg dist-cjs/index.js --config pkg.config.json --output ../../dist-bin/virtualpeerreview",
+    "dev": "tsx src/index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "@yao-pkg/pkg": "^5.15.0",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3"
+  }
+}

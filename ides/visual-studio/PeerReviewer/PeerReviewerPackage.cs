@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.Design;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ namespace PeerReviewer
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideToolWindow(typeof(PeerReviewerToolWindow), Style = VsDockStyle.Tabbed,
         Window = "3ae79031-e1bc-11d0-8f78-00a0c9110057")]
-    [ProvideOptionPage(typeof(PeerReviewerOptionsPage), "PeerReviewer", "General", 0, 0, true)]
+    [ProvideOptionPage(typeof(PeerReviewerOptionsPage), "Virtual Peer Review", "General", 0, 0, true)]
     [ProvideAutoLoad(UIContextGuids80.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
     public sealed class PeerReviewerPackage : AsyncPackage
     {
@@ -26,23 +27,13 @@ namespace PeerReviewer
         {
             await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-            var commandService = await GetServiceAsync(typeof(Microsoft.VisualStudio.Shell.Interop.SVsUIShell))
-                as IVsUIShell;
-
-            // Register the tool window command
-            var menuCommandService = await GetServiceAsync(typeof(System.ComponentModel.Design.IMenuCommandService))
-                as System.ComponentModel.Design.IMenuCommandService;
-
-            if (menuCommandService != null)
+            var commandService = await GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
+            if (commandService != null)
             {
-                var commandId = new System.ComponentModel.Design.CommandID(
-                    new Guid(ToolWindowCommandSetGuid), ToolWindowCommandId);
-                var menuItem = new System.ComponentModel.Design.MenuCommand(ShowToolWindow, commandId);
-                menuCommandService.AddCommand(menuItem);
+                var commandId = new CommandID(new Guid(ToolWindowCommandSetGuid), ToolWindowCommandId);
+                var menuItem = new MenuCommand(ShowToolWindow, commandId);
+                commandService.AddCommand(menuItem);
             }
-
-            // Auto-show the tool window when the package loads
-            ShowToolWindow(this, EventArgs.Empty);
         }
 
         private void ShowToolWindow(object sender, EventArgs e)
@@ -51,7 +42,7 @@ namespace PeerReviewer
 
             var window = FindToolWindow(typeof(PeerReviewerToolWindow), 0, true);
             if (window?.Frame == null)
-                throw new NotSupportedException("Cannot create Peer Reviewer tool window");
+                throw new NotSupportedException("Cannot create Virtual Peer Review tool window");
 
             var windowFrame = (IVsWindowFrame)window.Frame;
             Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
@@ -67,7 +58,7 @@ namespace PeerReviewer
         protected override string GetToolWindowTitle(Type toolWindowType, int id)
         {
             if (toolWindowType == typeof(PeerReviewerToolWindow))
-                return "Peer Reviewer";
+                return "Virtual Peer Review";
             return base.GetToolWindowTitle(toolWindowType, id);
         }
     }

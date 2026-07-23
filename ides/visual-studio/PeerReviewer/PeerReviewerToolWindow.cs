@@ -9,7 +9,7 @@ namespace PeerReviewer
     {
         public PeerReviewerToolWindow() : base(null)
         {
-            Caption = "Peer Reviewer";
+            Caption = "Virtual Peer Review";
             Content = new PeerReviewerControl();
         }
     }

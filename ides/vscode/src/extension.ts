@@ -8,7 +8,7 @@ let autoAnalyseInterval: ReturnType<typeof setInterval> | undefined;
 let saveWatcher: vscode.Disposable | undefined;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-  const output = vscode.window.createOutputChannel("Peer Reviewer");
+  const output = vscode.window.createOutputChannel("Virtual Peer Review");
   context.subscriptions.push(output);
 
   const client = new IpcClient();
@@ -21,7 +21,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Determine repo path from workspace
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (!workspaceFolders || workspaceFolders.length === 0) {
-    output.appendLine("No workspace folder open, Peer Reviewer inactive.");
+    output.appendLine("No workspace folder open, Virtual Peer Review inactive.");
     return;
   }
 
@@ -33,13 +33,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     output.appendLine(`Failed to connect to service: ${msg}`);
-    provider.showError(`Unable to connect to Peer Reviewer service: ${msg}`);
-    vscode.window.showErrorMessage(`Peer Reviewer: ${msg}`);
+    provider.showError(`Unable to connect to Virtual Peer Review service: ${msg}`);
+    vscode.window.showErrorMessage(`Virtual Peer Review: ${msg}`);
     return;
   }
 
   provider.setRepoRoot(repoRoot);
-  output.appendLine(`Peer Reviewer active for repo: ${repoRoot}`);
+  output.appendLine(`Virtual Peer Review active for repo: ${repoRoot}`);
 
   // Sync VS Code settings to service
   await syncConfigToService(client, output);
@@ -87,13 +87,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       try {
         const result = await client.testProvider(config);
         if (result.ok) {
-          vscode.window.showInformationMessage(`Peer Reviewer: ${config.activeProvider} provider connected successfully.`);
+          vscode.window.showInformationMessage(`Virtual Peer Review: ${config.activeProvider} provider connected successfully.`);
         } else {
-          vscode.window.showErrorMessage(`Peer Reviewer: ${config.activeProvider} provider test failed — ${result.error}`);
+          vscode.window.showErrorMessage(`Virtual Peer Review: ${config.activeProvider} provider test failed — ${result.error}`);
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        vscode.window.showErrorMessage(`Peer Reviewer: Provider test error — ${msg}`);
+        vscode.window.showErrorMessage(`Virtual Peer Review: Provider test error — ${msg}`);
       }
     })
   );
@@ -160,7 +160,7 @@ async function runAnalysis(
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     output.appendLine(`Analysis error: ${msg}`);
-    vscode.window.showWarningMessage(`Peer Reviewer analysis failed: ${msg}`);
+    vscode.window.showWarningMessage(`Virtual Peer Review analysis failed: ${msg}`);
   } finally {
     clearInterval(progressPoll);
     provider.hideProcessing();

@@ -90,7 +90,7 @@ class PeerReviewerConfigurable : Configurable {
     private val testConnectionButton = JButton("Test Connection")
     private val testConnectionStatusLabel = JBLabel("")
 
-    override fun getDisplayName(): String = "Peer Reviewer"
+    override fun getDisplayName(): String = "Virtual Peer Review"
 
     override fun createComponent(): JComponent {
         providerCards.add(buildCodexPanel(), "codex")

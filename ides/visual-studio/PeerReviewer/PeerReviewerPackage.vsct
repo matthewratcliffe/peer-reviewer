@@ -15,12 +15,19 @@
     <Buttons>
       <Button guid="guidPeerReviewerCmdSet" id="PeerReviewerToolWindowCommandId" priority="0x0100" type="Button">
         <Parent guid="guidPeerReviewerCmdSet" id="PeerReviewerMenuGroup"/>
+        <Icon guid="guidSHLMainMenu" id="2"/>
+        <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
-          <ButtonText>Peer Reviewer</ButtonText>
+          <ButtonText>Virtual Peer Review</ButtonText>
         </Strings>
       </Button>
     </Buttons>
   </Commands>
+
+  <VisibilityConstraints>
+    <VisibilityItem guid="guidPeerReviewerCmdSet" id="PeerReviewerToolWindowCommandId"
+                    context="UICONTEXT_SolutionExists"/>
+  </VisibilityConstraints>
 
   <Symbols>
     <GuidSymbol name="guidPeerReviewerPackage" value="{d4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f90}" />

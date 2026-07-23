@@ -1,6 +1,6 @@
 {
   "name": "peer-reviewer-vscode",
-  "displayName": "Peer Reviewer",
+  "displayName": "Virtual Peer Review",
   "description": "AI-powered code review findings displayed inline in VS Code",
   "version": "0.1.0",
   "publisher": "peerreviewer",
@@ -15,7 +15,7 @@
       "activitybar": [
         {
           "id": "peer-reviewer",
-          "title": "Peer Reviewer",
+          "title": "Virtual Peer Review",
           "icon": "$(eye)"
         }
       ]
@@ -25,7 +25,7 @@
         {
           "type": "webview",
           "id": "peerReviewer.panel",
-          "name": "Peer Reviewer"
+          "name": "Virtual Peer Review"
         }
       ]
     },
@@ -48,7 +48,7 @@
       }
     ],
     "configuration": {
-      "title": "Peer Reviewer",
+      "title": "Virtual Peer Review",
       "properties": {
         "peerReviewer.provider": {
           "type": "string",

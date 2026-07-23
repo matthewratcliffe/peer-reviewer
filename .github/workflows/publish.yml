@@ -27,6 +27,14 @@ on:
         options:
           - 'yes'
           - 'no'
+      publish_tui:
+        description: 'Publish TUI to npm'
+        required: true
+        default: 'no'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
 
 env:
   NODE_VERSION: '22'
@@ -76,6 +84,50 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: service-binary-${{ matrix.platform }}
+          path: dist-bin/${{ matrix.binary }}
+          if-no-files-found: error
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Build the TUI binary (standalone interactive terminal client)
+  # ─────────────────────────────────────────────────────────────────────
+  build-tui:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            binary: virtualpeerreview
+            platform: linux
+            pkg-target: node18-linux-x64
+          - os: macos-latest
+            binary: virtualpeerreview
+            platform: macos
+            pkg-target: node18-macos-x64
+          - os: windows-latest
+            binary: virtualpeerreview.exe
+            platform: windows
+            pkg-target: node18-win-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build CJS
+        working-directory: packages/tui
+        run: npm run build:cjs
+
+      - name: Package binary
+        working-directory: packages/tui
+        run: npx pkg dist-cjs/index.js --target ${{ matrix.pkg-target }} --output ../../dist-bin/${{ matrix.binary }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tui-binary-${{ matrix.platform }}
           path: dist-bin/${{ matrix.binary }}
           if-no-files-found: error
 
@@ -361,11 +413,46 @@ jobs:
             -personalAccessToken $env:VS_MARKETPLACE_PAT
 
   # ─────────────────────────────────────────────────────────────────────
+  # Publish TUI to npm (only when selected)
+  # ─────────────────────────────────────────────────────────────────────
+  publish-tui:
+    needs: build-tui
+    if: github.event.inputs.publish_tui == 'yes'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci
+
+      - name: Set version
+        working-directory: packages/tui
+        run: npm version "${{ env.VERSION }}" --no-git-tag-version
+
+      - name: Build
+        working-directory: packages/tui
+        run: npm run build
+
+      - name: Publish to npm
+        working-directory: packages/tui
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
+
+  # ─────────────────────────────────────────────────────────────────────
   # Create GitHub Release with all built artifacts
   # ─────────────────────────────────────────────────────────────────────
   release:
     if: always() && !cancelled() && !failure()
-    needs: [build-vscode, build-rider, build-visual-studio]
+    needs: [build-vscode, build-rider, build-visual-studio, build-tui]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -391,3 +478,6 @@ jobs:
             artifacts/vscode-vsix/vscode_peerreviewer_*.vsix
             artifacts/rider-plugin/rider_peerreviewer_*.zip
             artifacts/visual-studio-vsix/visualstudio_peerreviewer_*.vsix
+            artifacts/tui-binary-linux/virtualpeerreview
+            artifacts/tui-binary-macos/virtualpeerreview
+            artifacts/tui-binary-windows/virtualpeerreview.exe
