@@ -43,7 +43,7 @@ export type ServiceEvent =
   | AnalysisStartedEvent
   | AnalysisFailedEvent;
 
-export interface ReviewNotesConfig {
+export interface PeerReviewerConfig {
   activeProvider: ProviderId;
   providers: {
     codex: { command: string; args: string[] };

@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import type { Finding } from "./ipc-client";
 import { loadNote, saveNote } from "./notes";
 
-export class ReviewNotesWebviewProvider implements vscode.WebviewViewProvider {
-  public static readonly viewType = "reviewNotes.panel";
+export class PeerReviewerWebviewProvider implements vscode.WebviewViewProvider {
+  public static readonly viewType = "peerReviewer.panel";
 
   private view?: vscode.WebviewView;
   private repoRoot: string = "";
@@ -77,7 +77,7 @@ export class ReviewNotesWebviewProvider implements vscode.WebviewViewProvider {
       }
       case "dismiss": {
         const findingId = msg.findingId as string;
-        vscode.commands.executeCommand("reviewNotes.dismiss", findingId);
+        vscode.commands.executeCommand("peerReviewer.dismiss", findingId);
         break;
       }
       case "load-note": {
@@ -93,15 +93,15 @@ export class ReviewNotesWebviewProvider implements vscode.WebviewViewProvider {
         break;
       }
       case "reanalyse-changes": {
-        vscode.commands.executeCommand("reviewNotes.reanalyseChanges");
+        vscode.commands.executeCommand("peerReviewer.reanalyseChanges");
         break;
       }
       case "reanalyse-project": {
-        vscode.commands.executeCommand("reviewNotes.reanalyseProject");
+        vscode.commands.executeCommand("peerReviewer.reanalyseProject");
         break;
       }
       case "stop-analysis": {
-        vscode.commands.executeCommand("reviewNotes.stopAnalysis");
+        vscode.commands.executeCommand("peerReviewer.stopAnalysis");
         break;
       }
     }

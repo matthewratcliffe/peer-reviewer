@@ -1,4 +1,4 @@
-package com.reviewnotes
+package com.peerreviewer
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.Configurable
@@ -16,7 +16,7 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import kotlin.concurrent.thread
 
-private val LOG = Logger.getInstance(ReviewNotesConfigurable::class.java)
+private val LOG = Logger.getInstance(PeerReviewerConfigurable::class.java)
 
 private val PROVIDER_LABELS = linkedMapOf(
     "claude" to "Claude",
@@ -53,9 +53,9 @@ private const val DEFAULT_SYSTEM_PROMPT = """You are a first-pass code reviewer 
 
 Do not comment on pure style/formatting preferences that have no functional or maintenance consequence. Only report things a competent human reviewer would actually flag — skip anything speculative or low-confidence. Do not include positive feedback, compliments, or commentary on things done well — only return actionable issues that need to be changed. Respond with strict JSON: an array of objects with fields startLine, endLine (1-indexed lines in the NEW file), severity ("info"|"low"|"medium"|"high"), category, title (short), message (explain the issue and, where relevant, its consequence). If there are no issues, respond with an empty array."""
 
-class ReviewNotesConfigurable : Configurable {
+class PeerReviewerConfigurable : Configurable {
     private val client = IpcClient()
-    private var loaded: ReviewNotesConfig? = null
+    private var loaded: PeerReviewerConfig? = null
 
     private val providerCombo = ComboBox(PROVIDER_LABELS.values.toTypedArray())
     private val providerCards = JPanel(CardLayout())
@@ -89,7 +89,7 @@ class ReviewNotesConfigurable : Configurable {
     private val testConnectionButton = JButton("Test Connection")
     private val testConnectionStatusLabel = JBLabel("")
 
-    override fun getDisplayName(): String = "Review Notes"
+    override fun getDisplayName(): String = "Peer Reviewer"
 
     override fun createComponent(): JComponent {
         providerCards.add(buildCodexPanel(), "codex")
@@ -174,7 +174,7 @@ class ReviewNotesConfigurable : Configurable {
         testConnectionButton.isEnabled = false
         testConnectionStatusLabel.text = "Testing..."
         testConnectionStatusLabel.foreground = java.awt.Color.GRAY
-        thread(isDaemon = true, name = "review-notes-test-connection") {
+        thread(isDaemon = true, name = "peer-reviewer-test-connection") {
             var failure: Exception? = null
             try {
                 client.testProvider(config)
@@ -217,11 +217,11 @@ class ReviewNotesConfigurable : Configurable {
         PROVIDER_LABELS.entries.firstOrNull { it.value == providerCombo.selectedItem }?.key ?: "claude"
 
     private fun reload() {
-        thread(isDaemon = true, name = "review-notes-settings-load") {
+        thread(isDaemon = true, name = "peer-reviewer-settings-load") {
             val config = try {
                 client.getConfig()
             } catch (e: Exception) {
-                LOG.warn("review-notes: failed to load config (is the service running?)", e)
+                LOG.warn("peer-reviewer: failed to load config (is the service running?)", e)
                 null
             } ?: return@thread
 
@@ -265,14 +265,14 @@ class ReviewNotesConfigurable : Configurable {
         }
     }
 
-    private fun buildConfigFromUi(): ReviewNotesConfig {
+    private fun buildConfigFromUi(): PeerReviewerConfig {
         val promptMode = when (systemPromptModeCombo.selectedIndex) {
             1 -> "append"
             2 -> "replace"
             else -> "default"
         }
         val promptText = if (promptMode == "default") "" else systemPromptTextArea.text
-        return ReviewNotesConfig(
+        return PeerReviewerConfig(
             activeProvider = providerIdForSelection(),
             providers = ProvidersConfig(
                 codex = CodexProviderConfig(

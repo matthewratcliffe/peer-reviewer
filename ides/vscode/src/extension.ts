@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { IpcClient, ReviewNotesConfig } from "./ipc-client";
-import { ReviewNotesWebviewProvider } from "./webview-provider";
+import { IpcClient, PeerReviewerConfig } from "./ipc-client";
+import { PeerReviewerWebviewProvider } from "./webview-provider";
 import { ensureRunningAndRegister } from "./service-launcher";
 
 let pollInterval: ReturnType<typeof setInterval> | undefined;
@@ -8,20 +8,20 @@ let autoAnalyseInterval: ReturnType<typeof setInterval> | undefined;
 let saveWatcher: vscode.Disposable | undefined;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-  const output = vscode.window.createOutputChannel("Review Notes");
+  const output = vscode.window.createOutputChannel("Peer Reviewer");
   context.subscriptions.push(output);
 
   const client = new IpcClient();
-  const provider = new ReviewNotesWebviewProvider(context.extensionUri);
+  const provider = new PeerReviewerWebviewProvider(context.extensionUri);
 
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(ReviewNotesWebviewProvider.viewType, provider)
+    vscode.window.registerWebviewViewProvider(PeerReviewerWebviewProvider.viewType, provider)
   );
 
   // Determine repo path from workspace
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (!workspaceFolders || workspaceFolders.length === 0) {
-    output.appendLine("No workspace folder open, Review Notes inactive.");
+    output.appendLine("No workspace folder open, Peer Reviewer inactive.");
     return;
   }
 
@@ -33,32 +33,32 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     output.appendLine(`Failed to connect to service: ${msg}`);
-    provider.showError(`Unable to connect to Review Notes service: ${msg}`);
-    vscode.window.showErrorMessage(`Review Notes: ${msg}`);
+    provider.showError(`Unable to connect to Peer Reviewer service: ${msg}`);
+    vscode.window.showErrorMessage(`Peer Reviewer: ${msg}`);
     return;
   }
 
   provider.setRepoRoot(repoRoot);
-  output.appendLine(`Review Notes active for repo: ${repoRoot}`);
+  output.appendLine(`Peer Reviewer active for repo: ${repoRoot}`);
 
   // Sync VS Code settings to service
   await syncConfigToService(client, output);
 
   // Register commands
   context.subscriptions.push(
-    vscode.commands.registerCommand("reviewNotes.reanalyseChanges", async () => {
+    vscode.commands.registerCommand("peerReviewer.reanalyseChanges", async () => {
       await runAnalysis(client, repoRoot, "changes", provider, output);
     })
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("reviewNotes.reanalyseProject", async () => {
+    vscode.commands.registerCommand("peerReviewer.reanalyseProject", async () => {
       await runAnalysis(client, repoRoot, "project", provider, output);
     })
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("reviewNotes.stopAnalysis", async () => {
+    vscode.commands.registerCommand("peerReviewer.stopAnalysis", async () => {
       try {
         await client.cancelAnalysis(repoRoot);
         provider.hideProcessing();
@@ -70,7 +70,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("reviewNotes.dismiss", async (findingId: string) => {
+    vscode.commands.registerCommand("peerReviewer.dismiss", async (findingId: string) => {
       try {
         await client.dismissFinding(findingId);
         await refreshFindings(client, repoRoot, provider, output);
@@ -82,18 +82,18 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("reviewNotes.testProvider", async () => {
+    vscode.commands.registerCommand("peerReviewer.testProvider", async () => {
       const config = buildConfigFromSettings();
       try {
         const result = await client.testProvider(config);
         if (result.ok) {
-          vscode.window.showInformationMessage(`Review Notes: ${config.activeProvider} provider connected successfully.`);
+          vscode.window.showInformationMessage(`Peer Reviewer: ${config.activeProvider} provider connected successfully.`);
         } else {
-          vscode.window.showErrorMessage(`Review Notes: ${config.activeProvider} provider test failed — ${result.error}`);
+          vscode.window.showErrorMessage(`Peer Reviewer: ${config.activeProvider} provider test failed — ${result.error}`);
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        vscode.window.showErrorMessage(`Review Notes: Provider test error — ${msg}`);
+        vscode.window.showErrorMessage(`Peer Reviewer: Provider test error — ${msg}`);
       }
     })
   );
@@ -111,10 +111,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Re-setup auto-analyse when config changes
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(async (e) => {
-      if (e.affectsConfiguration("reviewNotes")) {
+      if (e.affectsConfiguration("peerReviewer")) {
         await syncConfigToService(client, output);
       }
-      if (e.affectsConfiguration("reviewNotes.autoAnalyse")) {
+      if (e.affectsConfiguration("peerReviewer.autoAnalyse")) {
         setupAutoAnalyse(context, client, repoRoot, provider, output);
       }
     })
@@ -134,7 +134,7 @@ async function runAnalysis(
   client: IpcClient,
   repoRoot: string,
   scope: "changes" | "project",
-  provider: ReviewNotesWebviewProvider,
+  provider: PeerReviewerWebviewProvider,
   output: vscode.OutputChannel
 ): Promise<void> {
   provider.showProcessing(`Analysing ${scope}...`);
@@ -160,7 +160,7 @@ async function runAnalysis(
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     output.appendLine(`Analysis error: ${msg}`);
-    vscode.window.showWarningMessage(`Review Notes analysis failed: ${msg}`);
+    vscode.window.showWarningMessage(`Peer Reviewer analysis failed: ${msg}`);
   } finally {
     clearInterval(progressPoll);
     provider.hideProcessing();
@@ -171,7 +171,7 @@ async function runAnalysis(
 async function refreshFindings(
   client: IpcClient,
   repoRoot: string,
-  provider: ReviewNotesWebviewProvider,
+  provider: PeerReviewerWebviewProvider,
   output: vscode.OutputChannel
 ): Promise<void> {
   try {
@@ -179,7 +179,7 @@ async function refreshFindings(
     provider.updateFindings(findings);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (vscode.workspace.getConfiguration("reviewNotes").get("debugLogging")) {
+    if (vscode.workspace.getConfiguration("peerReviewer").get("debugLogging")) {
       output.appendLine(`Findings poll error: ${msg}`);
     }
     if (msg.includes("ECONNREFUSED") || msg.includes("ENOENT") || msg.includes("timed out")) {
@@ -192,7 +192,7 @@ function setupAutoAnalyse(
   context: vscode.ExtensionContext,
   client: IpcClient,
   repoRoot: string,
-  provider: ReviewNotesWebviewProvider,
+  provider: PeerReviewerWebviewProvider,
   output: vscode.OutputChannel
 ): void {
   // Clean up existing watchers
@@ -205,7 +205,7 @@ function setupAutoAnalyse(
     saveWatcher = undefined;
   }
 
-  const config = vscode.workspace.getConfiguration("reviewNotes");
+  const config = vscode.workspace.getConfiguration("peerReviewer");
   const trigger = config.get<string>("autoAnalyse.trigger", "disabled");
   const intervalMinutes = config.get<number>("autoAnalyse.intervalMinutes", 5);
 
@@ -223,10 +223,10 @@ function setupAutoAnalyse(
   }
 }
 
-function buildConfigFromSettings(): ReviewNotesConfig {
-  const cfg = vscode.workspace.getConfiguration("reviewNotes");
+function buildConfigFromSettings(): PeerReviewerConfig {
+  const cfg = vscode.workspace.getConfiguration("peerReviewer");
   return {
-    activeProvider: cfg.get("provider", "claude") as ReviewNotesConfig["activeProvider"],
+    activeProvider: cfg.get("provider", "claude") as PeerReviewerConfig["activeProvider"],
     providers: {
       codex: {
         command: cfg.get("providers.codex.command", "codex"),

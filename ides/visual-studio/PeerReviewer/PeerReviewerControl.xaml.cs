@@ -14,7 +14,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 using EnvDTE;
 using EnvDTE80;
 
-namespace ReviewNotes
+namespace PeerReviewer
 {
     public class FindingDisplayRow
     {
@@ -40,7 +40,7 @@ namespace ReviewNotes
         }
     }
 
-    public partial class ReviewNotesControl : UserControl
+    public partial class PeerReviewerControl : UserControl
     {
         private readonly IpcClient _client = new IpcClient();
         private string _repoRoot;
@@ -55,7 +55,7 @@ namespace ReviewNotes
         private bool _analysisInProgress;
         private bool _detailVisible;
 
-        public ReviewNotesControl()
+        public PeerReviewerControl()
         {
             InitializeComponent();
             FindingsDataGrid.ItemsSource = _displayRows;
@@ -95,7 +95,7 @@ namespace ReviewNotes
             {
                 Dispatcher.Invoke(() =>
                 {
-                    ShowError($"Failed to connect to review-notes-service: {ex.Message}");
+                    ShowError($"Failed to connect to peer-reviewer-service: {ex.Message}");
                 });
             }
         }
@@ -297,7 +297,7 @@ namespace ReviewNotes
         {
             if (string.IsNullOrEmpty(_repoRoot))
             {
-                ShowError("Not connected to review-notes-service. Please wait and try again.");
+                ShowError("Not connected to peer-reviewer-service. Please wait and try again.");
                 return;
             }
 
@@ -515,7 +515,7 @@ namespace ReviewNotes
             {
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 var dte = Package.GetGlobalService(typeof(SDTE)) as DTE2;
-                dte?.ExecuteCommand("Tools.Options", "ReviewNotes");
+                dte?.ExecuteCommand("Tools.Options", "PeerReviewer");
             });
         }
 

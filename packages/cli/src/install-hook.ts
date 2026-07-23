@@ -10,11 +10,11 @@ export function installHook(): void {
   const source = join(dirname(fileURLToPath(import.meta.url)), "..", "hooks", "pre-commit");
 
   if (existsSync(target)) {
-    throw new Error(`${target} already exists. Remove it or merge review-notes' hook manually.`);
+    throw new Error(`${target} already exists. Remove it or merge peer-reviewer' hook manually.`);
   }
 
   mkdirSync(hooksDir, { recursive: true });
   copyFileSync(source, target);
   chmodSync(target, 0o755);
-  console.log(`review-notes: installed pre-commit hook at ${target}`);
+  console.log(`peer-reviewer: installed pre-commit hook at ${target}`);
 }

@@ -4,7 +4,7 @@ import * as vscode from "vscode";
 import { IpcClient } from "./ipc-client";
 
 function getServiceBinaryPath(extensionPath: string): string {
-  const binName = process.platform === "win32" ? "review-notes-service.exe" : "review-notes-service";
+  const binName = process.platform === "win32" ? "peer-reviewer-service.exe" : "peer-reviewer-service";
   return path.join(extensionPath, "bin", binName);
 }
 
@@ -51,5 +51,5 @@ export async function ensureRunningAndRegister(
     }
   }
 
-  throw new Error("Failed to start review-notes service within 15 seconds");
+  throw new Error("Failed to start peer-reviewer service within 15 seconds");
 }

@@ -1,4 +1,4 @@
 #!/bin/sh
-# Review Notes pre-commit hook.
-# Installed by `review-notes install-hook` into .git/hooks/pre-commit.
-npx --no-install review-notes check
+# Peer Reviewer pre-commit hook.
+# Installed by `peer-reviewer install-hook` into .git/hooks/pre-commit.
+npx --no-install peer-reviewer check

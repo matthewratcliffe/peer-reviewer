@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 
-namespace ReviewNotes
+namespace PeerReviewer
 {
     public static class ServiceLauncher
     {
@@ -12,7 +12,7 @@ namespace ReviewNotes
 
         private static readonly string HomeDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            ".review-notes");
+            ".peer-reviewer");
 
         private static readonly string LockFilePath = Path.Combine(HomeDir, "launch.lock");
 
@@ -59,7 +59,7 @@ namespace ReviewNotes
                 Thread.Sleep(ConnectRetryMs);
             }
             throw new TimeoutException(
-                $"review-notes-service did not become reachable within {ConnectTimeoutMs}ms");
+                $"peer-reviewer-service did not become reachable within {ConnectTimeoutMs}ms");
         }
 
         private static void SpawnService()
@@ -96,20 +96,20 @@ namespace ReviewNotes
             // Look relative to the extension assembly location
             var assemblyDir = Path.GetDirectoryName(typeof(ServiceLauncher).Assembly.Location) ?? "";
 
-            // The binary is at ../../dist-bin/review-notes-service.exe relative to ides/visual-studio/ReviewNotes
+            // The binary is at ../../dist-bin/peer-reviewer-service.exe relative to ides/visual-studio/PeerReviewer
             // From the installed extension location, try several resolution strategies:
             // 1. Adjacent dist-bin folder (development layout)
-            var devPath = Path.GetFullPath(Path.Combine(assemblyDir, "..", "..", "..", "..", "dist-bin", "review-notes-service.exe"));
+            var devPath = Path.GetFullPath(Path.Combine(assemblyDir, "..", "..", "..", "..", "dist-bin", "peer-reviewer-service.exe"));
             if (File.Exists(devPath))
                 return devPath;
 
             // 2. Bundled inside the extension's own folder
-            var bundledPath = Path.Combine(assemblyDir, "review-notes-service.exe");
+            var bundledPath = Path.Combine(assemblyDir, "peer-reviewer-service.exe");
             if (File.Exists(bundledPath))
                 return bundledPath;
 
-            // 3. In the user's .review-notes directory
-            var homePath = Path.Combine(HomeDir, "review-notes-service.exe");
+            // 3. In the user's .peer-reviewer directory
+            var homePath = Path.Combine(HomeDir, "peer-reviewer-service.exe");
             if (File.Exists(homePath))
                 return homePath;
 
@@ -117,7 +117,7 @@ namespace ReviewNotes
             var pathDirs = Environment.GetEnvironmentVariable("PATH")?.Split(';') ?? new string[0];
             foreach (var dir in pathDirs)
             {
-                var candidate = Path.Combine(dir.Trim(), "review-notes-service.exe");
+                var candidate = Path.Combine(dir.Trim(), "peer-reviewer-service.exe");
                 if (File.Exists(candidate))
                     return candidate;
             }

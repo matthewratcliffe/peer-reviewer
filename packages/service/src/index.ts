@@ -16,6 +16,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error("review-notes-service failed to start:", error);
+  console.error("peer-reviewer-service failed to start:", error);
   process.exit(1);
 });

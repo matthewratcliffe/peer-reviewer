@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace ReviewNotes
+namespace PeerReviewer
 {
     public static class NotesHelper
     {

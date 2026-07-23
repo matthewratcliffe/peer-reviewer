@@ -43,15 +43,15 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            binary: review-notes-service
+            binary: peer-reviewer-service
             platform: linux
             pkg-target: node18-linux-x64
           - os: macos-latest
-            binary: review-notes-service
+            binary: peer-reviewer-service
             platform: macos
             pkg-target: node18-macos-x64
           - os: windows-latest
-            binary: review-notes-service.exe
+            binary: peer-reviewer-service.exe
             platform: windows
             pkg-target: node18-win-x64
     runs-on: ${{ matrix.os }}
@@ -105,7 +105,7 @@ jobs:
           merge-multiple: true
 
       - name: Make binaries executable
-        run: chmod +x ides/vscode/bin/review-notes-service || true
+        run: chmod +x ides/vscode/bin/peer-reviewer-service || true
 
       - name: Install dependencies
         working-directory: ides/vscode
@@ -195,7 +195,7 @@ jobs:
           merge-multiple: true
 
       - name: Make binary executable
-        run: chmod +x dist-bin/review-notes-service || true
+        run: chmod +x dist-bin/peer-reviewer-service || true
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -268,7 +268,7 @@ jobs:
       - name: Set version
         shell: pwsh
         run: |
-          $manifest = "ides/visual-studio/ReviewNotes/source.extension.vsixmanifest"
+          $manifest = "ides/visual-studio/PeerReviewer/source.extension.vsixmanifest"
           $content = Get-Content $manifest -Raw
           $content = $content -replace '(<Identity[^>]*)\sVersion="[^"]*"', "`$1 Version=`"${{ env.VERSION }}`""
           Set-Content $manifest $content
@@ -277,15 +277,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: service-binary-windows
-          path: ides/visual-studio/ReviewNotes/bin
+          path: ides/visual-studio/PeerReviewer/bin
 
       - name: Restore packages
         working-directory: ides/visual-studio
-        run: msbuild ReviewNotes.sln /t:Restore
+        run: msbuild PeerReviewer.sln /t:Restore
 
       - name: Build VSIX
         working-directory: ides/visual-studio
-        run: msbuild ReviewNotes.sln /p:Configuration=Release /p:DeployExtension=false
+        run: msbuild PeerReviewer.sln /p:Configuration=Release /p:DeployExtension=false
 
       - name: Find VSIX
         id: find-vsix

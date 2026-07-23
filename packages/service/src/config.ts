@@ -59,7 +59,7 @@ export const ConfigSchema = z.object({
 
 export type Config = z.infer<typeof ConfigSchema>;
 
-const CONFIG_PATH = join(homedir(), ".review-notes", "config.json");
+const CONFIG_PATH = join(homedir(), ".peer-reviewer", "config.json");
 
 export function loadConfig(): Config {
   try {

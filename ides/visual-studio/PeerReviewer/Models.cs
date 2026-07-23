@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace ReviewNotes
+namespace PeerReviewer
 {
     public enum Severity
     {
@@ -170,7 +170,7 @@ namespace ReviewNotes
         public int IntervalMinutes { get; set; } = 5;
     }
 
-    public class ReviewNotesConfig
+    public class PeerReviewerConfig
     {
         [JsonPropertyName("activeProvider")]
         public string ActiveProvider { get; set; } = "claude";

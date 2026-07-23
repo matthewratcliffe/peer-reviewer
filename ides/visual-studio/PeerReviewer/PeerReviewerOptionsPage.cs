@@ -4,10 +4,10 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell;
 
-namespace ReviewNotes
+namespace PeerReviewer
 {
     [Guid("f6a7b8c9-d0e1-2f3a-4b5c-6d7e8f901234")]
-    public class ReviewNotesOptionsPage : DialogPage
+    public class PeerReviewerOptionsPage : DialogPage
     {
         [Category("Provider")]
         [DisplayName("Active Provider")]
@@ -129,7 +129,7 @@ namespace ReviewNotes
             }
         }
 
-        private void LoadFromConfig(ReviewNotesConfig config)
+        private void LoadFromConfig(PeerReviewerConfig config)
         {
             ActiveProvider = config.ActiveProvider ?? "claude";
 
@@ -177,9 +177,9 @@ namespace ReviewNotes
             DebugLogging = config.DebugLogging;
         }
 
-        private ReviewNotesConfig BuildConfig()
+        private PeerReviewerConfig BuildConfig()
         {
-            return new ReviewNotesConfig
+            return new PeerReviewerConfig
             {
                 ActiveProvider = ActiveProvider,
                 Providers = new ProvidersConfig

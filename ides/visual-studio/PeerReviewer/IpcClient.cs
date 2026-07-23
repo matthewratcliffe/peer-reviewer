@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Web;
 
-namespace ReviewNotes
+namespace PeerReviewer
 {
     public class IpcClient
     {
@@ -20,7 +20,7 @@ namespace ReviewNotes
             get
             {
                 var username = Environment.UserName;
-                return $"review-notes-{username}";
+                return $"peer-reviewer-{username}";
             }
         }
 
@@ -28,7 +28,7 @@ namespace ReviewNotes
         {
             var tokenPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".review-notes",
+                ".peer-reviewer",
                 "session.token");
             return File.ReadAllText(tokenPath).Trim();
         }
@@ -45,7 +45,7 @@ namespace ReviewNotes
                 var request = new StringBuilder();
                 request.Append($"{method} {path} HTTP/1.1\r\n");
                 request.Append("Host: localhost\r\n");
-                request.Append($"x-review-notes-token: {token}\r\n");
+                request.Append($"x-peer-reviewer-token: {token}\r\n");
                 if (bodyBytes != null)
                 {
                     request.Append("Content-Type: application/json\r\n");
@@ -77,7 +77,7 @@ namespace ReviewNotes
                 var statusCode = statusParts.Length > 1 ? int.Parse(statusParts[1]) : 0;
 
                 if (statusCode >= 400)
-                    throw new InvalidOperationException($"review-notes-service responded {statusCode}: {body}");
+                    throw new InvalidOperationException($"peer-reviewer-service responded {statusCode}: {body}");
 
                 return body;
             }
@@ -92,8 +92,6 @@ namespace ReviewNotes
                 while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
                 {
                     ms.Write(buffer, 0, read);
-                    if (read < buffer.Length)
-                        break;
                 }
                 return ms.ToArray();
             }
@@ -141,20 +139,20 @@ namespace ReviewNotes
             SendRequest("POST", $"/analyze/cancel?repo={encoded}");
         }
 
-        public ReviewNotesConfig GetConfig()
+        public PeerReviewerConfig GetConfig()
         {
             var body = SendRequest("GET", "/config");
-            return JsonSerializer.Deserialize<ReviewNotesConfig>(body, JsonOptions) ?? new ReviewNotesConfig();
+            return JsonSerializer.Deserialize<PeerReviewerConfig>(body, JsonOptions) ?? new PeerReviewerConfig();
         }
 
-        public ReviewNotesConfig UpdateConfig(ReviewNotesConfig config)
+        public PeerReviewerConfig UpdateConfig(PeerReviewerConfig config)
         {
             var payload = JsonSerializer.Serialize(config, JsonOptions);
             var body = SendRequest("PUT", "/config", payload);
-            return JsonSerializer.Deserialize<ReviewNotesConfig>(body, JsonOptions) ?? new ReviewNotesConfig();
+            return JsonSerializer.Deserialize<PeerReviewerConfig>(body, JsonOptions) ?? new PeerReviewerConfig();
         }
 
-        public void TestProvider(ReviewNotesConfig config)
+        public void TestProvider(PeerReviewerConfig config)
         {
             var payload = JsonSerializer.Serialize(config, JsonOptions);
             SendRequest("POST", "/providers/test", payload);

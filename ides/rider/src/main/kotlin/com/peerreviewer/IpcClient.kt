@@ -1,4 +1,4 @@
-package com.reviewnotes
+package com.peerreviewer
 
 import com.google.gson.Gson
 import org.newsclub.net.unix.AFUNIXSocket
@@ -44,7 +44,7 @@ data class ProvidersConfig(
 data class SystemPromptConfig(val mode: String, val text: String)
 data class PreCommitConfig(val blockOnFindings: Boolean)
 data class AutoAnalyseConfig(val trigger: String = "disabled", val intervalMinutes: Int = 5)
-data class ReviewNotesConfig(
+data class PeerReviewerConfig(
     val activeProvider: String,
     val providers: ProvidersConfig,
     val systemPrompt: SystemPromptConfig,
@@ -84,17 +84,17 @@ class IpcClient {
     private fun connect(): IpcConnection {
         val os = System.getProperty("os.name").lowercase()
         return if (os.contains("win")) {
-            WindowsPipeConnection("\\\\.\\pipe\\review-notes-${System.getProperty("user.name")}")
+            WindowsPipeConnection("\\\\.\\pipe\\peer-reviewer-${System.getProperty("user.name")}")
         } else {
             val home = System.getProperty("user.home")
-            val address = AFUNIXSocketAddress.of(Paths.get(home, ".review-notes", "service.sock").toFile())
+            val address = AFUNIXSocketAddress.of(Paths.get(home, ".peer-reviewer", "service.sock").toFile())
             UnixSocketConnection(AFUNIXSocket.connectTo(address))
         }
     }
 
     private fun readToken(): String {
         val home = System.getProperty("user.home")
-        return Paths.get(home, ".review-notes", "session.token").toFile().readText().trim()
+        return Paths.get(home, ".peer-reviewer", "session.token").toFile().readText().trim()
     }
 
     private fun request(method: String, path: String, jsonBody: String? = null): String {
@@ -105,7 +105,7 @@ class IpcClient {
             val requestText = buildString {
                 append("$method $path HTTP/1.1\r\n")
                 append("Host: localhost\r\n")
-                append("x-review-notes-token: $token\r\n")
+                append("x-peer-reviewer-token: $token\r\n")
                 if (bodyBytes != null) {
                     append("Content-Type: application/json\r\n")
                     append("Content-Length: ${bodyBytes.size}\r\n")
@@ -147,7 +147,7 @@ class IpcClient {
 
             val statusCode = statusLine.split(" ").getOrNull(1)?.toIntOrNull() ?: 0
             if (statusCode >= 400) {
-                throw RuntimeException("review-notes-service responded $statusCode: $body")
+                throw RuntimeException("peer-reviewer-service responded $statusCode: $body")
             }
             return body
         }
@@ -185,18 +185,18 @@ class IpcClient {
         request("POST", "/analyze/cancel?repo=${java.net.URLEncoder.encode(repo, "UTF-8")}")
     }
 
-    fun getConfig(): ReviewNotesConfig {
+    fun getConfig(): PeerReviewerConfig {
         val body = request("GET", "/config")
-        return gson.fromJson(body, ReviewNotesConfig::class.java)
+        return gson.fromJson(body, PeerReviewerConfig::class.java)
     }
 
-    fun updateConfig(config: ReviewNotesConfig): ReviewNotesConfig {
+    fun updateConfig(config: PeerReviewerConfig): PeerReviewerConfig {
         val body = request("PUT", "/config", gson.toJson(config))
-        return gson.fromJson(body, ReviewNotesConfig::class.java)
+        return gson.fromJson(body, PeerReviewerConfig::class.java)
     }
 
     /** Tests the active provider in [config] against the live service without persisting it. Throws with details on failure. */
-    fun testProvider(config: ReviewNotesConfig) {
+    fun testProvider(config: PeerReviewerConfig) {
         request("POST", "/providers/test", gson.toJson(config))
     }
 }

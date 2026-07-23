@@ -1,10 +1,10 @@
-# Review Notes
+# Peer Reviewer
 
-Review Notes is an AI-powered local code review service that analyses your code changes using configurable LLM providers and surfaces actionable findings directly in your IDE. It runs entirely on your machine — no code leaves your environment — and supports Rider, VS Code, and Visual Studio through dedicated plugins that share a single background service.
+Peer Reviewer is an AI-powered local code review service that analyses your code changes using configurable LLM providers and surfaces actionable findings directly in your IDE. It runs entirely on your machine — no code leaves your environment — and supports Rider, VS Code, and Visual Studio through dedicated plugins that share a single background service.
 
 ## What it does
 
-When you save a file, commit changes, or trigger a manual scan, Review Notes sends your diffs to a local LLM (Claude, Codex, llama.cpp, OpenCode, or Kiro) and returns concrete, categorised findings: correctness issues, security vulnerabilities, penetration-testing concerns, performance problems, resource leaks, and more. Findings appear in a familiar errors/warnings-style table with columns for severity, issue title, description, file, and line number.
+When you save a file, commit changes, or trigger a manual scan, Peer Reviewer sends your diffs to a local LLM (Claude, Codex, llama.cpp, OpenCode, or Kiro) and returns concrete, categorised findings: correctness issues, security vulnerabilities, penetration-testing concerns, performance problems, resource leaks, and more. Findings appear in a familiar errors/warnings-style table with columns for severity, issue title, description, file, and line number.
 
 Each finding includes a detailed three-part explanation: what the issue is, why it matters, and how it could be exploited or lead to failure in practice. Team members can annotate findings with shared notes that persist in the repository under `.peer-review/notes/`, making it easy to discuss and track review feedback across the team without leaving the IDE.
 
@@ -42,7 +42,7 @@ The service communicates over a local IPC channel (Windows named pipe or Unix do
 
 ## Configuration
 
-All settings are stored in `~/.review-notes/config.json` and can be edited through the IDE settings page or by calling `PUT /config` on the service. Key options:
+All settings are stored in `~/.peer-reviewer/config.json` and can be edited through the IDE settings page or by calling `PUT /config` on the service. Key options:
 
 - **Provider**: which LLM to use (claude, codex, llama-cpp, opencode, kiro)
 - **System prompt**: default, append, or replace the built-in review prompt

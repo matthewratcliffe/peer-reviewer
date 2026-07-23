@@ -12,7 +12,7 @@ import type { RepoManager } from "./repo-manager.js";
 export function startServer(repos: RepoManager, token: string) {
   const app = express();
   app.use((req, res, next) => {
-    if (req.headers["x-review-notes-token"] !== token) {
+    if (req.headers["x-peer-reviewer-token"] !== token) {
       res.status(403).json({ error: "invalid token" });
       return;
     }
@@ -152,7 +152,7 @@ export function startServer(repos: RepoManager, token: string) {
     server: httpServer,
     path: "/events",
     verifyClient: (info, callback) => {
-      callback(info.req.headers["x-review-notes-token"] === token);
+      callback(info.req.headers["x-peer-reviewer-token"] === token);
     },
   });
 
@@ -170,7 +170,7 @@ export function startServer(repos: RepoManager, token: string) {
   }
 
   httpServer.listen(socketPath, () => {
-    console.log(`review-notes-service listening on ${socketPath}`);
+    console.log(`peer-reviewer-service listening on ${socketPath}`);
   });
 
   return { broadcast };

@@ -1,4 +1,4 @@
-package com.reviewnotes
+package com.peerreviewer
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.Logger
@@ -14,7 +14,7 @@ private const val CONNECT_RETRY_MS = 300L
 private const val CONNECT_TIMEOUT_MS = 15000L
 
 object ServiceLauncher {
-    private val homeDir = Paths.get(System.getProperty("user.home"), ".review-notes")
+    private val homeDir = Paths.get(System.getProperty("user.home"), ".peer-reviewer")
     private val lockFile = homeDir.resolve("launch.lock").toFile()
 
     /** Ensures the shared service is running, then registers [repoPath] and returns its resolved git root. */
@@ -56,16 +56,16 @@ object ServiceLauncher {
             tryRegister(client, repoPath)?.let { return it }
             Thread.sleep(CONNECT_RETRY_MS)
         }
-        throw IllegalStateException("review-notes-service did not become reachable within ${CONNECT_TIMEOUT_MS}ms")
+        throw IllegalStateException("peer-reviewer-service did not become reachable within ${CONNECT_TIMEOUT_MS}ms")
     }
 
     private fun spawnService() {
-        val plugin = PluginManagerCore.getPlugin(PluginId.getId("com.reviewnotes.rider"))
-            ?: throw IllegalStateException("review-notes plugin descriptor not found")
+        val plugin = PluginManagerCore.getPlugin(PluginId.getId("com.peerreviewer.rider"))
+            ?: throw IllegalStateException("peer-reviewer plugin descriptor not found")
         val binaryName = if (System.getProperty("os.name").lowercase().contains("win")) {
-            "review-notes-service.exe"
+            "peer-reviewer-service.exe"
         } else {
-            "review-notes-service"
+            "peer-reviewer-service"
         }
         val binaryPath = plugin.pluginPath.resolve("bin").resolve(binaryName)
         if (!Files.exists(binaryPath)) {
@@ -77,6 +77,6 @@ object ServiceLauncher {
             .redirectOutput(logFile)
             .redirectError(logFile)
             .start()
-        LOG.info("launched review-notes-service from $binaryPath")
+        LOG.info("launched peer-reviewer-service from $binaryPath")
     }
 }

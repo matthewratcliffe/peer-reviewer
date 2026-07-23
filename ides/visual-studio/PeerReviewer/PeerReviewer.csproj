@@ -4,8 +4,8 @@
     <TargetFramework>net48</TargetFramework>
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
-    <RootNamespace>ReviewNotes</RootNamespace>
-    <AssemblyName>ReviewNotes</AssemblyName>
+    <RootNamespace>PeerReviewer</RootNamespace>
+    <AssemblyName>PeerReviewer</AssemblyName>
     <GeneratePkgDefFile>false</GeneratePkgDefFile>
     <UseCodebase>true</UseCodebase>
     <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
@@ -36,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <VSCTCompile Include="ReviewNotesPackage.vsct">
+    <VSCTCompile Include="PeerReviewerPackage.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
     </VSCTCompile>
   </ItemGroup>
@@ -46,7 +46,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="bin\review-notes-service.exe" Condition="Exists('bin\review-notes-service.exe')">
+    <Content Include="bin\peer-reviewer-service.exe" Condition="Exists('bin\peer-reviewer-service.exe')">
       <IncludeInVSIX>true</IncludeInVSIX>
       <VSIXSubPath>bin</VSIXSubPath>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

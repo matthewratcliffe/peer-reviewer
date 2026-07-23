@@ -36,7 +36,7 @@ export interface Finding {
   createdAt: string;
 }
 
-export interface ReviewNotesConfig {
+export interface PeerReviewerConfig {
   activeProvider: ProviderId;
   providers: {
     codex: { command: string; args: string[] };
@@ -60,13 +60,13 @@ export interface AnalysisProgress {
 
 function resolveIpcPath(): string {
   if (process.platform === "win32") {
-    return `\\\\.\\pipe\\review-notes-${os.userInfo().username}`;
+    return `\\\\.\\pipe\\peer-reviewer-${os.userInfo().username}`;
   }
-  return path.join(os.homedir(), ".review-notes", "service.sock");
+  return path.join(os.homedir(), ".peer-reviewer", "service.sock");
 }
 
 function readToken(): string {
-  const tokenPath = path.join(os.homedir(), ".review-notes", "session.token");
+  const tokenPath = path.join(os.homedir(), ".peer-reviewer", "session.token");
   try {
     return fs.readFileSync(tokenPath, "utf-8").trim();
   } catch {
@@ -100,7 +100,7 @@ export class IpcClient {
         const lines: string[] = [
           `${method} ${urlPath} HTTP/1.1`,
           `Host: localhost`,
-          `x-review-notes-token: ${this.token}`,
+          `x-peer-reviewer-token: ${this.token}`,
           `Content-Type: application/json`,
           `Content-Length: ${Buffer.byteLength(bodyStr)}`,
           `Connection: close`,
@@ -170,7 +170,7 @@ export class IpcClient {
     if (resp.statusCode !== 200) {
       throw new Error(`getAllFindings failed (${resp.statusCode}): ${resp.body}`);
     }
-    return JSON.parse(resp.body);
+    return JSON.parse(resp.body).findings;
   }
 
   async analyzeChanges(repoRoot: string): Promise<void> {
@@ -202,7 +202,7 @@ export class IpcClient {
     }
   }
 
-  async getConfig(): Promise<ReviewNotesConfig> {
+  async getConfig(): Promise<PeerReviewerConfig> {
     const resp = await this.request("GET", "/config");
     if (resp.statusCode !== 200) {
       throw new Error(`getConfig failed (${resp.statusCode}): ${resp.body}`);
@@ -210,14 +210,14 @@ export class IpcClient {
     return JSON.parse(resp.body);
   }
 
-  async updateConfig(config: ReviewNotesConfig): Promise<void> {
+  async updateConfig(config: PeerReviewerConfig): Promise<void> {
     const resp = await this.request("PUT", "/config", config);
     if (resp.statusCode !== 200 && resp.statusCode !== 204) {
       throw new Error(`updateConfig failed (${resp.statusCode}): ${resp.body}`);
     }
   }
 
-  async testProvider(config: ReviewNotesConfig): Promise<{ ok: boolean; error?: string }> {
+  async testProvider(config: PeerReviewerConfig): Promise<{ ok: boolean; error?: string }> {
     const resp = await this.request("POST", "/providers/test", config);
     if (resp.statusCode === 200) {
       return JSON.parse(resp.body);
