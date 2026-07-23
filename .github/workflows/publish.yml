@@ -213,10 +213,9 @@ jobs:
       - name: Publish to JetBrains Marketplace
         working-directory: ides/rider
         env:
-          JETBRAINS_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
           JETBRAINS_SIGNING_KEY: ${{ secrets.JETBRAINS_SIGNING_KEY }}
           JETBRAINS_CERTIFICATE_CHAIN: ${{ secrets.JETBRAINS_CERTIFICATE_CHAIN }}
-        run: gradle publishPlugin -Dorg.gradle.project.intellijPublishToken="$JETBRAINS_TOKEN"
+        run: gradle publishPlugin -PintellijPublishToken="${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}"
 
   # ─────────────────────────────────────────────────────────────────────
   # Visual Studio Extension (signed via SignPath — free for open source)
