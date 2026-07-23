@@ -131,19 +131,24 @@ export class Analyzer {
   }
 
   private async runBatch(relativePaths: string[], task: (relativePath: string) => Promise<void>): Promise<void> {
+    const maxConcurrency = 3;
     this.cancelled = false;
     this.progress = { total: relativePaths.length, completed: 0, startedAt: Date.now() };
     try {
-      await Promise.all(
-        relativePaths.map(async (relativePath) => {
+      let index = 0;
+      const next = async (): Promise<void> => {
+        while (index < relativePaths.length) {
           if (this.cancelled) return;
+          const currentIndex = index++;
           try {
-            await task(relativePath);
+            await task(relativePaths[currentIndex]);
           } finally {
             if (this.progress) this.progress.completed += 1;
           }
-        })
-      );
+        }
+      };
+      const workers = Array.from({ length: Math.min(maxConcurrency, relativePaths.length) }, () => next());
+      await Promise.all(workers);
     } finally {
       this.progress = null;
       this.cancelled = false;

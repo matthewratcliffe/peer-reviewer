@@ -14,6 +14,7 @@ export function runCliCommand(command: string, args: string[], input: string, de
     const child = spawn(command, args, {
       stdio: ["pipe", "pipe", "pipe"],
       shell: process.platform === "win32",
+      windowsHide: true,
     });
     let stdout = "";
     let stderr = "";

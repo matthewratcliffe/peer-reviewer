@@ -6,7 +6,7 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>PeerReviewer</RootNamespace>
     <AssemblyName>PeerReviewer</AssemblyName>
-    <GeneratePkgDefFile>false</GeneratePkgDefFile>
+    <GeneratePkgDefFile>true</GeneratePkgDefFile>
     <UseCodebase>true</UseCodebase>
     <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
     <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
