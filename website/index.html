@@ -3,996 +3,1132 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Virtual Peer Review — AI-Powered Code Review in Your IDE</title>
-  <meta name="description" content="Get instant, actionable code review feedback directly in your IDE. Powered by local LLMs. Supports VS Code, Rider, Visual Studio, and the terminal.">
-  <style>
-    :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --border: #2a2d3a;
-      --text: #e4e4e7;
-      --text-dim: #9ca3af;
-      --accent: #6366f1;
-      --accent-light: #818cf8;
-      --green: #34d399;
-      --yellow: #fbbf24;
-      --red: #f87171;
-      --cyan: #22d3ee;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
-
-    /* Header */
-    header {
-      padding: 20px 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    header .container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .logo {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: var(--text);
-      text-decoration: none;
-    }
-
-    .logo span {
-      color: var(--accent-light);
-    }
-
-    nav a {
-      color: var(--text-dim);
-      text-decoration: none;
-      margin-left: 32px;
-      font-size: 0.9rem;
-      transition: color 0.2s;
-    }
-
-    nav a:hover { color: var(--text); }
-
-    /* Hero */
-    .hero {
-      padding: 100px 0 80px;
-      text-align: center;
-    }
-
-    .hero h1 {
-      font-size: 3.2rem;
-      font-weight: 800;
-      line-height: 1.15;
-      margin-bottom: 24px;
-      background: linear-gradient(135deg, var(--text) 0%, var(--accent-light) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .hero p {
-      font-size: 1.25rem;
-      color: var(--text-dim);
-      max-width: 640px;
-      margin: 0 auto 40px;
-    }
-
-    .hero-cta {
-      display: inline-flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .btn {
-      display: inline-block;
-      padding: 14px 28px;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      text-decoration: none;
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-
-    .btn:hover { transform: translateY(-1px); }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
-    }
-
-    .btn-secondary {
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    /* Terminal demo */
-    .terminal-demo {
-      margin: 60px auto 0;
-      max-width: 700px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      text-align: left;
-    }
-
-    .terminal-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      background: #15171f;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .terminal-dot {
-      width: 12px; height: 12px;
-      border-radius: 50%;
-    }
-
-    .terminal-dot.red { background: #ff5f57; }
-    .terminal-dot.yellow { background: #febc2e; }
-    .terminal-dot.green { background: #28c840; }
-
-    .terminal-body {
-      padding: 20px;
-      font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
-      font-size: 0.85rem;
-      line-height: 1.7;
-      color: var(--text-dim);
-      white-space: pre;
-      overflow-x: auto;
-    }
-
-    .terminal-body .prompt { color: var(--green); }
-    .terminal-body .cmd { color: var(--text); }
-    .terminal-body .heading { color: var(--text); font-weight: bold; }
-    .terminal-body .high { color: var(--red); }
-    .terminal-body .medium { color: var(--yellow); }
-    .terminal-body .dim { color: var(--text-dim); }
-    .terminal-body .file { color: var(--cyan); }
-
-    /* Features */
-    .features {
-      padding: 100px 0;
-    }
-
-    .features h2 {
-      font-size: 2.2rem;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 16px;
-    }
-
-    .features .subtitle {
-      text-align: center;
-      color: var(--text-dim);
-      font-size: 1.1rem;
-      margin-bottom: 60px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 24px;
-    }
-
-    .feature-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 32px;
-      transition: border-color 0.2s;
-    }
-
-    .feature-card:hover { border-color: var(--accent); }
-
-    .feature-icon {
-      font-size: 1.8rem;
-      margin-bottom: 16px;
-    }
-
-    .feature-card h3 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-
-    .feature-card p {
-      color: var(--text-dim);
-      font-size: 0.95rem;
-    }
-
-    /* Categories */
-    .categories {
-      padding: 80px 0;
-      border-top: 1px solid var(--border);
-    }
-
-    .categories h2 {
-      font-size: 2rem;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 40px;
-    }
-
-    .category-list {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-
-    .category-tag {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 8px 16px;
-      font-size: 0.85rem;
-      color: var(--text-dim);
-      font-family: 'SF Mono', 'Fira Code', monospace;
-    }
-
-    /* IDEs section */
-    .ides {
-      padding: 100px 0;
-      border-top: 1px solid var(--border);
-    }
-
-    .ides h2 {
-      font-size: 2.2rem;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 16px;
-    }
-
-    .ides .subtitle {
-      text-align: center;
-      color: var(--text-dim);
-      font-size: 1.1rem;
-      margin-bottom: 60px;
-    }
-
-    .ides-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 24px;
-      max-width: 960px;
-      margin: 0 auto;
-    }
-
-    .ide-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 32px 24px;
-      text-align: center;
-      transition: border-color 0.2s;
-    }
-
-    .ide-card:hover { border-color: var(--accent); }
-
-    .ide-card .ide-icon {
-      font-size: 2.5rem;
-      margin-bottom: 16px;
-    }
-
-    .ide-card h3 {
-      font-size: 1.05rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .ide-card p {
-      color: var(--text-dim);
-      font-size: 0.85rem;
-    }
-
-    .ide-links {
-      margin-top: 14px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-    }
-
-    .ide-links a {
-      display: inline-block;
-      font-size: 0.78rem;
-      color: var(--accent-light);
-      text-decoration: none;
-      padding: 4px 10px;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      transition: background 0.15s, border-color 0.15s;
-    }
-
-    .ide-links a:hover {
-      background: rgba(99, 102, 241, 0.1);
-      border-color: var(--accent);
-    }
-
-    /* Providers */
-    .providers {
-      padding: 100px 0;
-      border-top: 1px solid var(--border);
-    }
-
-    .providers h2 {
-      font-size: 2.2rem;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 16px;
-    }
-
-    .providers .subtitle {
-      text-align: center;
-      color: var(--text-dim);
-      font-size: 1.1rem;
-      margin-bottom: 20px;
-      max-width: 700px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .providers .note {
-      text-align: center;
-      color: var(--yellow);
-      font-size: 0.95rem;
-      margin-bottom: 50px;
-      max-width: 700px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .providers-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-
-    .provider-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 28px 20px;
-      text-align: center;
-    }
-
-    .provider-card h3 {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .provider-card p {
-      color: var(--text-dim);
-      font-size: 0.82rem;
-    }
-
-    .provider-card .provider-type {
-      display: inline-block;
-      margin-top: 10px;
-      font-size: 0.75rem;
-      padding: 3px 10px;
-      border-radius: 12px;
-      background: rgba(99, 102, 241, 0.15);
-      color: var(--accent-light);
-    }
-
-    /* How it works */
-    .how-it-works {
-      padding: 100px 0;
-      border-top: 1px solid var(--border);
-    }
-
-    .how-it-works h2 {
-      font-size: 2.2rem;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 60px;
-    }
-
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 32px;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    .step {
-      text-align: center;
-    }
-
-    .step-number {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 48px; height: 48px;
-      border-radius: 50%;
-      background: var(--accent);
-      color: #fff;
-      font-weight: 700;
-      font-size: 1.2rem;
-      margin-bottom: 16px;
-    }
-
-    .step h3 {
-      font-size: 1.05rem;
-      margin-bottom: 8px;
-    }
-
-    .step p {
-      color: var(--text-dim);
-      font-size: 0.9rem;
-    }
-
-    /* Story */
-    .story {
-      padding: 80px 0;
-      border-top: 1px solid var(--border);
-      text-align: center;
-    }
-
-    .story blockquote {
-      font-size: 1.3rem;
-      font-style: italic;
-      color: var(--text-dim);
-      max-width: 700px;
-      margin: 0 auto 24px;
-      line-height: 1.7;
-    }
-
-    .story .attribution {
-      color: var(--text-dim);
-      font-size: 0.9rem;
-    }
-
-    /* Support / Buy me a coffee */
-    .support {
-      padding: 80px 0;
-      border-top: 1px solid var(--border);
-      text-align: center;
-    }
-
-    .support h2 {
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin-bottom: 16px;
-    }
-
-    .support p {
-      color: var(--text-dim);
-      max-width: 500px;
-      margin: 0 auto 32px;
-      font-size: 1rem;
-    }
-
-    .support a img {
-      height: 48px;
-      transition: transform 0.15s;
-    }
-
-    .support a img:hover {
-      transform: scale(1.05);
-    }
-
-    /* Downloads */
-    .downloads {
-      padding: 100px 0;
-      border-top: 1px solid var(--border);
-    }
-
-    .downloads h2 {
-      font-size: 2.2rem;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 16px;
-    }
-
-    .downloads .subtitle {
-      text-align: center;
-      color: var(--text-dim);
-      font-size: 1.1rem;
-      margin-bottom: 12px;
-    }
-
-    .downloads .version-badge {
-      text-align: center;
-      margin-bottom: 48px;
-    }
-
-    .downloads .version-badge span {
-      display: inline-block;
-      background: rgba(99, 102, 241, 0.15);
-      color: var(--accent-light);
-      font-size: 0.85rem;
-      font-weight: 600;
-      padding: 6px 14px;
-      border-radius: 16px;
-      font-family: 'SF Mono', 'Fira Code', monospace;
-    }
-
-    .download-groups {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
-      max-width: 960px;
-      margin: 0 auto;
-    }
-
-    .download-group {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 28px;
-    }
-
-    .download-group h3 {
-      font-size: 1.05rem;
-      font-weight: 600;
-      margin-bottom: 16px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .download-group ul {
-      list-style: none;
-    }
-
-    .download-group li {
-      margin-bottom: 10px;
-    }
-
-    .download-group a {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: var(--accent-light);
-      text-decoration: none;
-      font-size: 0.9rem;
-      padding: 8px 12px;
-      border-radius: 6px;
-      transition: background 0.15s;
-    }
-
-    .download-group a:hover {
-      background: rgba(99, 102, 241, 0.1);
-    }
-
-    .download-group a .dl-icon {
-      font-size: 1.1rem;
-    }
-
-    .download-group a .dl-platform {
-      color: var(--text-dim);
-      font-size: 0.8rem;
-      margin-left: auto;
-    }
-
-    .downloads .loading {
-      text-align: center;
-      color: var(--text-dim);
-      padding: 40px 0;
-    }
-
-    .downloads .npm-install {
-      text-align: center;
-      margin-top: 32px;
-      color: var(--text-dim);
-      font-size: 0.95rem;
-    }
-
-    .downloads .npm-install code {
-      display: inline-block;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-family: 'SF Mono', 'Fira Code', monospace;
-      font-size: 0.9rem;
-      color: var(--green);
-      margin-top: 8px;
-    }
-
-    /* Contribute */
-    .contribute {
-      padding: 80px 0;
-      border-top: 1px solid var(--border);
-      text-align: center;
-    }
-
-    .contribute h2 {
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin-bottom: 16px;
-    }
-
-    .contribute p {
-      color: var(--text-dim);
-      max-width: 600px;
-      margin: 0 auto 32px;
-      font-size: 1rem;
-      line-height: 1.7;
-    }
-
-    .contribute-cta {
-      display: inline-flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    /* Footer */
-    footer {
-      padding: 40px 0;
-      border-top: 1px solid var(--border);
-      text-align: center;
-      color: var(--text-dim);
-      font-size: 0.85rem;
-    }
-
-    footer a {
-      color: var(--accent-light);
-      text-decoration: none;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .hero h1 { font-size: 2.2rem; }
-      .hero p { font-size: 1.05rem; }
-      .features h2, .ides h2, .providers h2, .how-it-works h2 { font-size: 1.7rem; }
-      .terminal-body { font-size: 0.75rem; }
-      header .container { flex-direction: column; gap: 12px; }
-      nav a { margin-left: 16px; }
-    }
-  </style>
+  <title>Virtual Peer Review — AI Code Review That Actually Catches Bugs</title>
+  <meta name="description" content="Stop shipping bugs. Get instant AI code review in your IDE that finds real security holes, logic errors, and race conditions before your team does.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
+<style>
 
-  <header>
-    <div class="container">
-      <a href="#" class="logo">Virtual <span>Peer Review</span></a>
-      <nav>
-        <a href="#features">Features</a>
-        <a href="#ides">IDEs</a>
-        <a href="#downloads">Downloads</a>
-        <a href="#providers">Providers</a>
-        <a href="#how-it-works">Setup</a>
-        <a href="https://github.com/matthewratcliffe/peer-reviewer" target="_blank">GitHub</a>
-      </nav>
+:root {
+  --bg: #09090b;
+  --surface: #18181b;
+  --surface-hover: #1f1f23;
+  --border: #27272a;
+  --text: #fafafa;
+  --text-secondary: #a1a1aa;
+  --accent: #7c3aed;
+  --accent-hover: #8b5cf6;
+  --accent-glow: rgba(124, 58, 237, 0.3);
+  --green: #10b981;
+  --yellow: #f59e0b;
+  --red: #ef4444;
+  --cyan: #06b6d4;
+  --pink: #ec4899;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+
+/* Animated background */
+.bg-glow {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.bg-glow::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at 30% 20%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 50%, rgba(236, 72, 153, 0.03) 0%, transparent 40%);
+  animation: bgFloat 20s ease-in-out infinite;
+}
+
+@keyframes bgFloat {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(2%, -2%) rotate(1deg); }
+  66% { transform: translate(-1%, 1%) rotate(-0.5deg); }
+}
+
+/* Header */
+header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 16px 0;
+  background: rgba(9, 9, 11, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(39, 39, 42, 0.5);
+}
+
+header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.logo span { color: var(--accent-hover); }
+
+nav { display: flex; align-items: center; gap: 8px; }
+
+nav a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+nav a:hover { color: var(--text); background: var(--surface); }
+
+
+/* Hero */
+.hero {
+  padding: 160px 0 100px;
+  text-align: center;
+  position: relative;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+  animation: fadeInUp 0.6s ease;
+}
+
+.hero-badge .pulse {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.5); }
+}
+
+.hero h1 {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  margin-bottom: 24px;
+  animation: fadeInUp 0.6s ease 0.1s both;
+}
+
+.hero h1 .gradient-text {
+  background: linear-gradient(135deg, var(--accent-hover) 0%, var(--pink) 50%, var(--cyan) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero p {
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto 48px;
+  animation: fadeInUp 0.6s ease 0.2s both;
+}
+
+.hero-cta {
+  display: inline-flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fadeInUp 0.6s ease 0.3s both;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 20px var(--accent-glow), 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 0 30px var(--accent-glow), 0 8px 24px rgba(0,0,0,0.4);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--surface-hover);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+/* Terminal */
+.terminal {
+  margin: 64px auto 0;
+  max-width: 720px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 40px var(--accent-glow);
+  animation: fadeInUp 0.8s ease 0.4s both;
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid var(--border);
+}
+
+.terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+.terminal-dot.r { background: #ff5f57; }
+.terminal-dot.y { background: #febc2e; }
+.terminal-dot.g { background: #28c840; }
+
+.terminal-body {
+  padding: 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  line-height: 1.8;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--text-secondary);
+}
+
+.terminal-body .p { color: var(--green); }
+.terminal-body .c { color: var(--text); }
+.terminal-body .h { color: var(--text); font-weight: 700; }
+.terminal-body .hi { color: var(--red); }
+.terminal-body .md { color: var(--yellow); }
+.terminal-body .f { color: var(--cyan); }
+.terminal-body .d { color: #52525b; }
+
+
+/* Stats */
+.stats {
+  padding: 80px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--accent-hover), var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* Section common */
+section h2 {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+section .subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto 60px;
+}
+
+/* Features */
+.features { padding: 120px 0; }
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.feature-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(124, 58, 237, 0.1);
+}
+
+.feature-card:hover::before { opacity: 1; }
+
+.feature-icon {
+  width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 12px;
+  background: rgba(124, 58, 237, 0.1);
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+}
+
+.feature-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.feature-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+
+/* Categories */
+.categories { padding: 100px 0; }
+
+.category-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.category-tag {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.2s;
+}
+
+.category-tag:hover {
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+/* IDEs */
+.ides { padding: 120px 0; }
+
+.ides-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.ide-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px 28px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.ide-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(124, 58, 237, 0.1);
+}
+
+.ide-card .ide-icon { font-size: 2.8rem; margin-bottom: 16px; }
+.ide-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+.ide-card p { color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6; }
+
+.ide-links {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.ide-links a {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--accent-hover);
+  text-decoration: none;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+
+.ide-links a:hover {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: var(--accent);
+}
+
+.ides .marketplace-note {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 48px;
+}
+
+.ides .marketplace-note a {
+  color: var(--accent-hover);
+  text-decoration: none;
+}
+
+
+/* Providers */
+.providers { padding: 120px 0; }
+
+.providers .note {
+  text-align: center;
+  color: var(--yellow);
+  font-size: 0.9rem;
+  margin: -40px auto 50px;
+  max-width: 680px;
+  padding: 16px 24px;
+  background: rgba(245, 158, 11, 0.05);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 10px;
+}
+
+.providers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.provider-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 20px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.provider-card:hover { border-color: var(--border); transform: translateY(-2px); }
+.provider-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 6px; }
+.provider-card p { color: var(--text-secondary); font-size: 0.78rem; }
+
+.provider-type {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--accent-hover);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Downloads */
+.downloads { padding: 120px 0; }
+
+.downloads .version-badge {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.downloads .version-badge span {
+  display: inline-block;
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--accent-hover);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.download-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.download-group {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.download-group h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.download-group ul { list-style: none; }
+.download-group li { margin-bottom: 8px; }
+
+.download-group a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent-hover);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 10px 14px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.download-group a:hover { background: rgba(124, 58, 237, 0.08); }
+.download-group a .dl-platform { color: var(--text-secondary); font-size: 0.78rem; margin-left: auto; }
+
+.downloads .loading { text-align: center; color: var(--text-secondary); padding: 40px 0; }
+
+.downloads .npm-install {
+  text-align: center;
+  margin-top: 40px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.downloads .npm-install code {
+  display: inline-block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  color: var(--green);
+  margin-top: 12px;
+}
+
+
+/* How it works */
+.how-it-works { padding: 120px 0; }
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.step { text-align: center; }
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--accent), var(--pink));
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px var(--accent-glow);
+}
+
+.step h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; }
+.step p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; }
+.step code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--green);
+  background: var(--surface);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Story */
+.story {
+  padding: 100px 0;
+  text-align: center;
+  position: relative;
+}
+
+.story::before {
+  content: '\201C';
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8rem;
+  color: var(--accent);
+  opacity: 0.1;
+  font-family: Georgia, serif;
+}
+
+.story blockquote {
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  max-width: 680px;
+  margin: 0 auto 24px;
+  line-height: 1.8;
+  font-style: italic;
+}
+
+.story .attribution {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Support */
+.support {
+  padding: 80px 0;
+  text-align: center;
+}
+
+.support h2 { margin-bottom: 16px; }
+
+.support p {
+  color: var(--text-secondary);
+  max-width: 480px;
+  margin: 0 auto 32px;
+  font-size: 1rem;
+}
+
+.support a img { height: 52px; transition: transform 0.2s; }
+.support a img:hover { transform: scale(1.08); }
+
+/* Contribute */
+.contribute {
+  padding: 100px 0;
+  text-align: center;
+  position: relative;
+}
+
+.contribute::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 200px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+.contribute h2 { margin-bottom: 16px; }
+
+.contribute p {
+  color: var(--text-secondary);
+  max-width: 620px;
+  margin: 0 auto 36px;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.contribute-cta {
+  display: inline-flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+
+/* Footer */
+footer {
+  padding: 48px 0;
+  text-align: center;
+  border-top: 1px solid var(--border);
+}
+
+footer img {
+  height: 36px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  margin-bottom: 16px;
+}
+
+footer img:hover { opacity: 1; }
+
+footer p {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+footer a {
+  color: var(--accent-hover);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+footer a:hover { color: var(--text); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+  .steps { grid-template-columns: 1fr; gap: 32px; }
+  .features-grid { grid-template-columns: 1fr; }
+  header .container { flex-direction: column; gap: 12px; }
+  nav { flex-wrap: wrap; justify-content: center; }
+  .terminal { margin: 40px auto 0; }
+}
+
+/* Scroll animations */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>
+
+
+<div class="bg-glow"></div>
+
+<header>
+  <div class="container">
+    <a href="#" class="logo">Virtual <span>Peer Review</span></a>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#ides">IDEs</a>
+      <a href="#downloads">Downloads</a>
+      <a href="#providers">Providers</a>
+      <a href="https://github.com/matthewratcliffe/peer-reviewer" target="_blank">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge"><span class="pulse"></span> Free &amp; open source</div>
+    <h1>Stop shipping bugs.<br><span class="gradient-text">Start shipping confidence.</span></h1>
+    <p>AI-powered code review that runs locally in your IDE. Catches security holes, logic errors, and race conditions before any human reviewer ever sees the code.</p>
+    <div class="hero-cta">
+      <a href="#downloads" class="btn btn-primary">Download Now</a>
+      <a href="https://github.com/matthewratcliffe/peer-reviewer" class="btn btn-secondary" target="_blank">View Source</a>
     </div>
-  </header>
 
-  <section class="hero">
-    <div class="container">
-      <h1>Your AI teammate that reviews<br>every change before you push</h1>
-      <p>Virtual Peer Review runs a first-pass code review directly in your IDE, catching real bugs, security issues, and logic errors before any human reviewer sees the code.</p>
-      <div class="hero-cta">
-        <a href="https://github.com/matthewratcliffe/peer-reviewer/releases" class="btn btn-primary">Download</a>
-        <a href="https://github.com/matthewratcliffe/peer-reviewer" class="btn btn-secondary">View on GitHub</a>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div>
+        <div class="terminal-dot y"></div>
+        <div class="terminal-dot g"></div>
       </div>
+      <div class="terminal-body"><span class="p">$</span> <span class="c">virtualpeerreview</span>
 
-      <div class="terminal-demo">
-        <div class="terminal-bar">
-          <div class="terminal-dot red"></div>
-          <div class="terminal-dot yellow"></div>
-          <div class="terminal-dot green"></div>
-        </div>
-        <div class="terminal-body"><span class="prompt">$</span> <span class="cmd">virtualpeerreview</span>
+ <span class="h">Virtual Peer Review</span>  <span class="d">— 3 finding(s)</span>
 
- <span class="heading">Virtual Peer Review</span>  <span class="dim">— 3 finding(s)</span>
+<span class="f"> src/auth/session.ts</span>
+  <span class="hi">●</span> Missing token expiry validation           <span class="d">:42</span>
+  <span class="md">▲</span> Race condition in concurrent refresh      <span class="d">:87</span>
+<span class="f"> src/api/users.ts</span>
+  <span class="md">▲</span> Unbounded query without pagination        <span class="d">:23</span>
 
-<span class="file"> src/auth/session.ts</span>
-  <span class="high">●</span> Missing token expiry validation           <span class="dim">:42</span>
-  <span class="medium">▲</span> Race condition in concurrent refresh      <span class="dim">:87</span>
-<span class="file"> src/api/users.ts</span>
-  <span class="medium">▲</span> Unbounded query without pagination        <span class="dim">:23</span>
+ <span class="d">↑/↓ navigate  enter detail  d dismiss  /command  s settings  q quit</span></div>
+    </div>
+  </div>
+</section>
 
- <span class="dim">↑/↓ navigate  enter detail  d dismiss  /command  s settings  q quit</span></div>
+
+<section class="stats reveal">
+  <div class="container">
+    <div class="stats-grid">
+      <div><div class="stat-number">13</div><div class="stat-label">review categories</div></div>
+      <div><div class="stat-number">5</div><div class="stat-label">LLM providers</div></div>
+      <div><div class="stat-number">4</div><div class="stat-label">IDE clients</div></div>
+      <div><div class="stat-number">0</div><div class="stat-label">data leaves your machine</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="features reveal" id="features">
+  <div class="container">
+    <h2>Not a linter. A real reviewer.</h2>
+    <p class="subtitle">Finds the things automated tools miss. The kind of stuff that costs you hours in production.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">&#128163;</div>
+        <h3>Real bug detection</h3>
+        <p>Catches logic errors, off-by-one mistakes, wrong conditionals, and incorrect assumptions that slip through every unit test you wrote.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#128274;</div>
+        <h3>Security &amp; penetration testing</h3>
+        <p>Identifies injection risks, auth gaps, privilege escalation paths, parameter tampering, and business logic abuse vectors.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#9889;</div>
+        <h3>Performance landmines</h3>
+        <p>Flags N+1 queries, unnecessary allocations in hot paths, and quadratic algorithms hiding in innocent-looking loops.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#128220;</div>
+        <h3>Your team's coding standards</h3>
+        <p>Point it at a folder of Markdown files with your org's standards. They become part of every review. Automatically enforced, zero nagging.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#128683;</div>
+        <h3>Pre-commit gate</h3>
+        <p>Block commits with unresolved findings. Bugs die in your terminal, not in production at 2am on a Saturday.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#128272;</div>
+        <h3>100% local &amp; private</h3>
+        <p>Runs on a local IPC socket. Your code never leaves your machine. No cloud, no telemetry, no "we train on your data" nonsense.</p>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="features" id="features">
-    <div class="container">
-      <h2>Built for real engineering teams</h2>
-      <p class="subtitle">Not a linter. Not a formatter. A reviewer that finds the things automated tools miss.</p>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">&#128269;</div>
-          <h3>Real bug detection</h3>
-          <p>Catches logic errors, off-by-one mistakes, wrong conditionals, and incorrect assumptions that slip through unit tests.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#128274;</div>
-          <h3>Security &amp; penetration testing</h3>
-          <p>Identifies injection risks, auth gaps, privilege escalation paths, parameter tampering, and unsafe deserialization.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#9889;</div>
-          <h3>Performance awareness</h3>
-          <p>Flags N+1 queries, unnecessary allocations in hot paths, and quadratic algorithms where linear ones are straightforward.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#128203;</div>
-          <h3>Organisation coding standards</h3>
-          <p>Point it at a folder of Markdown files with your team's standards. They become part of every review, automatically enforced.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#128256;</div>
-          <h3>Pre-commit gate</h3>
-          <p>Optionally block commits when unresolved medium/high findings exist. Catches issues before they enter your branch.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#127968;</div>
-          <h3>Fully local &amp; private</h3>
-          <p>Runs entirely on your machine over a local IPC socket. Your code never leaves your workstation. No cloud, no telemetry.</p>
+
+<section class="categories reveal">
+  <div class="container">
+    <h2>What it looks for</h2>
+    <p class="subtitle">Every finding is categorised. Filter by what matters to you.</p>
+    <div class="category-list">
+      <span class="category-tag">correctness</span>
+      <span class="category-tag">security</span>
+      <span class="category-tag">penetration-testing</span>
+      <span class="category-tag">naming</span>
+      <span class="category-tag">best-practice</span>
+      <span class="category-tag">unintended-consequence</span>
+      <span class="category-tag">error-handling</span>
+      <span class="category-tag">performance</span>
+      <span class="category-tag">concurrency</span>
+      <span class="category-tag">resource-leak</span>
+      <span class="category-tag">test-coverage</span>
+      <span class="category-tag">api-contract</span>
+      <span class="category-tag">maintainability</span>
+    </div>
+  </div>
+</section>
+
+<section class="ides reveal" id="ides">
+  <div class="container">
+    <h2>Works where you work</h2>
+    <p class="subtitle">One service, every IDE. Same findings everywhere.</p>
+    <p class="marketplace-note">Install from your IDE's marketplace for automatic updates, or <a href="#downloads">download manually</a>.</p>
+    <div class="ides-grid">
+      <div class="ide-card">
+        <div class="ide-icon">&#128313;</div>
+        <h3>VS Code</h3>
+        <p>Webview panel with findings list, click-to-navigate, and inline settings.</p>
+        <div class="ide-links">
+          <a href="https://marketplace.visualstudio.com/search?term=Virtual%20Peer%20Review&target=VSCode" target="_blank">VS Code Marketplace</a>
+          <a href="https://open-vsx.org/extension/PeerReviewer/peer-reviewer-vscode" target="_blank">Open VSX</a>
         </div>
       </div>
-    </div>
-  </section>
-
-  <section class="categories">
-    <div class="container">
-      <h2>What it reviews</h2>
-      <div class="category-list">
-        <span class="category-tag">correctness</span>
-        <span class="category-tag">security</span>
-        <span class="category-tag">penetration-testing</span>
-        <span class="category-tag">naming</span>
-        <span class="category-tag">best-practice</span>
-        <span class="category-tag">unintended-consequence</span>
-        <span class="category-tag">error-handling</span>
-        <span class="category-tag">performance</span>
-        <span class="category-tag">concurrency</span>
-        <span class="category-tag">resource-leak</span>
-        <span class="category-tag">test-coverage</span>
-        <span class="category-tag">api-contract</span>
-        <span class="category-tag">maintainability</span>
-      </div>
-    </div>
-  </section>
-
-  <section class="ides" id="ides">
-    <div class="container">
-      <h2>Works where you work</h2>
-      <p class="subtitle">One shared service, multiple clients. Same findings everywhere.</p>
-      <p class="subtitle" style="font-size: 0.95rem; margin-bottom: 40px;">Install from your IDE's marketplace for automatic updates — or download manually from the <a href="#downloads" style="color: var(--accent-light); text-decoration: none;">releases below</a>.</p>
-      <div class="ides-grid">
-        <div class="ide-card">
-          <div class="ide-icon">&#128313;</div>
-          <h3>VS Code</h3>
-          <p>Webview panel with findings list, click-to-navigate, dismiss, and inline settings.</p>
-          <div class="ide-links">
-            <a href="https://marketplace.visualstudio.com/search?term=Virtual%20Peer%20Review&target=VSCode" target="_blank" rel="noopener">VS Code Marketplace</a>
-            <a href="https://open-vsx.org/extension/PeerReviewer/peer-reviewer-vscode" target="_blank" rel="noopener">Open VSX</a>
-          </div>
-        </div>
-        <div class="ide-card">
-          <div class="ide-icon">&#128312;</div>
-          <h3>JetBrains Rider</h3>
-          <p>Native tool window with full Kotlin/Swing UI, severity grouping, and notes.</p>
-          <div class="ide-links">
-            <a href="https://plugins.jetbrains.com/search?search=Virtual%20Peer%20Review" target="_blank" rel="noopener">JetBrains Marketplace</a>
-          </div>
-        </div>
-        <div class="ide-card">
-          <div class="ide-icon">&#128995;</div>
-          <h3>Visual Studio</h3>
-          <p>VSIX extension with WPF tool window and native Options page integration.</p>
-          <div class="ide-links">
-            <a href="https://marketplace.visualstudio.com/search?term=Virtual%20Peer%20Review&target=VS" target="_blank" rel="noopener">Visual Studio Marketplace</a>
-          </div>
-        </div>
-        <div class="ide-card">
-          <div class="ide-icon">&#9000;</div>
-          <h3>Terminal (TUI)</h3>
-          <p>Full interactive terminal UI. Navigate findings, run analysis, manage settings. No GUI required.</p>
-          <div class="ide-links">
-            <a href="https://www.npmjs.com/package/virtualpeerreview" target="_blank" rel="noopener">npm</a>
-          </div>
+      <div class="ide-card">
+        <div class="ide-icon">&#128312;</div>
+        <h3>JetBrains Rider</h3>
+        <p>Native tool window with Kotlin/Swing UI, severity grouping, and notes.</p>
+        <div class="ide-links">
+          <a href="https://plugins.jetbrains.com/search?search=Virtual%20Peer%20Review" target="_blank">JetBrains Marketplace</a>
         </div>
       </div>
-    </div>
-  </section>
-
-  <section class="providers" id="providers">
-    <div class="container">
-      <h2>Bring your own LLM</h2>
-      <p class="subtitle">Virtual Peer Review uses locally-installed CLI tools or a local llama.cpp server. You need an existing subscription or local model — the tool itself is free.</p>
-      <p class="note">&#9888; Requires a working local CLI subscription (Claude, Codex, Kiro, OpenCode) or a running llama.cpp instance. No API keys are entered into Virtual Peer Review — it delegates to whatever auth the CLI already has.</p>
-      <div class="providers-grid">
-        <div class="provider-card">
-          <h3>Claude CLI</h3>
-          <p>Anthropic's Claude via the local CLI</p>
-          <span class="provider-type">CLI</span>
+      <div class="ide-card">
+        <div class="ide-icon">&#128995;</div>
+        <h3>Visual Studio</h3>
+        <p>VSIX extension with WPF tool window and native Options page.</p>
+        <div class="ide-links">
+          <a href="https://marketplace.visualstudio.com/search?term=Virtual%20Peer%20Review&target=VS" target="_blank">VS Marketplace</a>
         </div>
-        <div class="provider-card">
-          <h3>Codex CLI</h3>
-          <p>OpenAI's Codex via the local CLI</p>
-          <span class="provider-type">CLI</span>
-        </div>
-        <div class="provider-card">
-          <h3>Kiro CLI</h3>
-          <p>AWS Kiro via the local CLI</p>
-          <span class="provider-type">CLI</span>
-        </div>
-        <div class="provider-card">
-          <h3>OpenCode CLI</h3>
-          <p>OpenCode via the local CLI</p>
-          <span class="provider-type">CLI</span>
-        </div>
-        <div class="provider-card">
-          <h3>llama.cpp</h3>
-          <p>Any local model via the OpenAI-compatible API</p>
-          <span class="provider-type">HTTP / Local</span>
+      </div>
+      <div class="ide-card">
+        <div class="ide-icon">&#9000;&#65039;</div>
+        <h3>Terminal</h3>
+        <p>Full interactive TUI. Like lazygit, but for code review.</p>
+        <div class="ide-links">
+          <a href="https://www.npmjs.com/package/virtualpeerreview" target="_blank">npm</a>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="how-it-works" id="how-it-works">
-    <div class="container">
-      <h2>Up and running in 2 minutes</h2>
-      <div class="steps">
-        <div class="step">
-          <div class="step-number">1</div>
-          <h3>Install the extension</h3>
-          <p>Grab the extension for your IDE from GitHub Releases, or install the TUI via npm:<br><code>npm i -g virtualpeerreview</code></p>
-        </div>
-        <div class="step">
-          <div class="step-number">2</div>
-          <h3>Have an LLM ready</h3>
-          <p>Make sure you have Claude CLI, Codex CLI, Kiro CLI, OpenCode CLI, or a llama.cpp server running locally.</p>
-        </div>
-        <div class="step">
-          <div class="step-number">3</div>
-          <h3>Open your project</h3>
-          <p>The service starts automatically when your IDE opens. Findings appear as you save or run analysis.</p>
-        </div>
+
+<section class="providers reveal" id="providers">
+  <div class="container">
+    <h2>Bring your own LLM</h2>
+    <p class="subtitle">Uses your existing CLI tools or a local llama.cpp server. The tool is free — bring whatever model you already pay for.</p>
+    <p class="note">Requires a working local CLI (Claude, Codex, Kiro, OpenCode) or a running llama.cpp instance. No API keys entered — it delegates to whatever auth your CLI already has.</p>
+    <div class="providers-grid">
+      <div class="provider-card">
+        <h3>Claude</h3>
+        <p>Anthropic's Claude CLI</p>
+        <span class="provider-type">CLI</span>
+      </div>
+      <div class="provider-card">
+        <h3>Codex</h3>
+        <p>OpenAI Codex CLI</p>
+        <span class="provider-type">CLI</span>
+      </div>
+      <div class="provider-card">
+        <h3>Kiro</h3>
+        <p>AWS Kiro CLI</p>
+        <span class="provider-type">CLI</span>
+      </div>
+      <div class="provider-card">
+        <h3>OpenCode</h3>
+        <p>OpenCode CLI</p>
+        <span class="provider-type">CLI</span>
+      </div>
+      <div class="provider-card">
+        <h3>llama.cpp</h3>
+        <p>Any local model</p>
+        <span class="provider-type">Local HTTP</span>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="downloads" id="downloads">
-    <div class="container">
-      <h2>Downloads</h2>
-      <p class="subtitle">Grab the latest release for your platform and IDE.</p>
-      <div class="version-badge"><span id="release-version">loading...</span></div>
-      <div id="download-content" class="loading">Fetching latest release...</div>
-      <div class="npm-install">
-        <p>Or install the terminal client via npm:</p>
-        <code>npm install -g virtualpeerreview</code>
+<section class="downloads reveal" id="downloads">
+  <div class="container">
+    <h2>Get it now</h2>
+    <p class="subtitle">Grab the latest release for your platform.</p>
+    <div class="version-badge"><span id="release-version">loading...</span></div>
+    <div id="download-content" class="loading">Fetching latest release...</div>
+    <div class="npm-install">
+      <p>Or install the terminal client via npm:</p>
+      <code>npm install -g virtualpeerreview</code>
+    </div>
+  </div>
+</section>
+
+<section class="how-it-works reveal">
+  <div class="container">
+    <h2>Up and running in 2 minutes</h2>
+    <p class="subtitle">Seriously. Two minutes.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>Install</h3>
+        <p>Grab the extension from your IDE's marketplace, or <code>npm i -g virtualpeerreview</code> for the terminal.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>Have an LLM ready</h3>
+        <p>Claude CLI, Codex CLI, Kiro, OpenCode, or a local llama.cpp server. If you can run it in your terminal, it works.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>Write code</h3>
+        <p>The service starts automatically. Findings appear as you save. That's it. No config files, no YAML, no ceremony.</p>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="story">
-    <div class="container">
-      <blockquote>"I built this to help my team catch real issues faster. Every PR used to sit in the review queue while obvious problems waited to be found. Now the obvious stuff is caught instantly, and human reviewers can focus on architecture and design. I hope it helps your team too."</blockquote>
-      <p class="attribution">— Matt Ratcliffe, creator of Virtual Peer Review</p>
+
+<section class="story reveal">
+  <div class="container">
+    <blockquote>"I built this to help my team catch real issues faster. Every PR sat in the review queue while obvious bugs waited to be found. Now the obvious stuff is caught instantly, and human reviewers focus on architecture and design. I hope it helps your team too."</blockquote>
+    <p class="attribution">— Matt Ratcliffe</p>
+  </div>
+</section>
+
+<section class="support reveal">
+  <div class="container">
+    <h2>Like it? Buy me a coffee.</h2>
+    <p>Virtual Peer Review is free and open source. If it saves your team time, I'd appreciate the caffeine.</p>
+    <a href="https://www.buymeacoffee.com/mratcliffe" target="_blank" rel="noopener">
+      <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee">
+    </a>
+  </div>
+</section>
+
+<section class="contribute reveal">
+  <div class="container">
+    <h2>Contribute or fork it</h2>
+    <p>This is open source. PRs welcome — whether it's a bug fix, a new provider, an IDE improvement, or a better prompt. Or fork it and make it yours. No gatekeeping here.</p>
+    <div class="contribute-cta">
+      <a href="https://github.com/matthewratcliffe/peer-reviewer" class="btn btn-primary" target="_blank">View on GitHub</a>
+      <a href="https://github.com/matthewratcliffe/peer-reviewer/fork" class="btn btn-secondary" target="_blank">Fork the repo</a>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="support">
-    <div class="container">
-      <h2>Support this project</h2>
-      <p>Virtual Peer Review is free and open source. If it saves your team time, consider buying me a coffee.</p>
-      <a href="https://www.buymeacoffee.com/mratcliffe" target="_blank" rel="noopener">
-        <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee">
-      </a>
-    </div>
-  </section>
+<footer>
+  <div class="container">
+    <a href="https://www.matthewratcliffe.com.au" target="_blank" rel="noopener">
+      <img src="mr_logo.png" alt="Matt Ratcliffe">
+    </a>
+    <p>Virtual Peer Review is open source under the MIT License.</p>
+    <p style="margin-top: 8px;"><a href="https://github.com/matthewratcliffe/peer-reviewer">GitHub</a> &middot; <a href="https://www.matthewratcliffe.com.au">matthewratcliffe.com.au</a></p>
+  </div>
+</footer>
 
-  <section class="contribute">
-    <div class="container">
-      <h2>Contribute or fork</h2>
-      <p>This project is open source and contributions are welcome. Whether it's a bug fix, a new provider adapter, an IDE client improvement, or just a better prompt — PRs are encouraged. If you'd rather take it in your own direction, fork it and make it yours.</p>
-      <div class="contribute-cta">
-        <a href="https://github.com/matthewratcliffe/peer-reviewer" class="btn btn-primary">View on GitHub</a>
-        <a href="https://github.com/matthewratcliffe/peer-reviewer/fork" class="btn btn-secondary">Fork the repo</a>
-      </div>
-    </div>
-  </section>
 
-  <footer>
-    <div class="container">
-      <p>Virtual Peer Review is open source under the MIT License.</p>
-      <p style="margin-top: 8px;"><a href="https://github.com/matthewratcliffe/peer-reviewer">GitHub</a> &middot; <a href="https://www.matthewratcliffe.com.au">matthewratcliffe.com.au</a></p>
-    </div>
-  </footer>
+<script>
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1 });
 
-  <script>
-    const REPO = 'matthewratcliffe/peer-reviewer';
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-    async function loadRelease() {
-      const container = document.getElementById('download-content');
-      const versionBadge = document.getElementById('release-version');
+// Downloads
+const REPO = 'matthewratcliffe/peer-reviewer';
 
-      try {
-        const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
-        if (!res.ok) throw new Error(`GitHub API returned ${res.status}`);
-        const release = await res.json();
+async function loadRelease() {
+  const container = document.getElementById('download-content');
+  const versionBadge = document.getElementById('release-version');
 
-        versionBadge.textContent = release.tag_name;
+  try {
+    const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
+    if (!res.ok) throw new Error(`${res.status}`);
+    const release = await res.json();
 
-        const assets = release.assets || [];
+    versionBadge.textContent = release.tag_name;
+    const assets = release.assets || [];
 
-        const groups = {
-          ide: { title: 'IDE Extensions', items: [] },
-          tui: { title: 'Terminal (TUI)', items: [] },
-        };
+    const groups = {
+      ide: { title: 'IDE Extensions', items: [] },
+      tui: { title: 'Terminal (TUI)', items: [] },
+    };
 
-        for (const asset of assets) {
-          const name = asset.name.toLowerCase();
-          const url = asset.browser_download_url;
+    for (const asset of assets) {
+      const name = asset.name.toLowerCase();
+      const url = asset.browser_download_url;
 
-          if (name.includes('vscode') && name.endsWith('.vsix')) {
-            groups.ide.items.push({ name: 'VS Code Extension', url, platform: '.vsix', icon: '\u{1F539}' });
-          } else if (name.includes('rider') && name.endsWith('.zip')) {
-            groups.ide.items.push({ name: 'JetBrains Rider Plugin', url, platform: '.zip', icon: '\u{1F538}' });
-          } else if (name.includes('visualstudio') && name.endsWith('.vsix')) {
-            groups.ide.items.push({ name: 'Visual Studio Extension', url, platform: '.vsix', icon: '\u{1F7E3}' });
-          } else if (name.startsWith('virtualpeerreview')) {
-            const platform = name.includes('.exe') ? 'Windows' : name.includes('macos') || name.includes('darwin') ? 'macOS' : 'Linux';
-            groups.tui.items.push({ name: `virtualpeerreview`, url, platform, icon: '\u2328' });
-          }
-        }
-
-        let html = '<div class="download-groups">';
-        for (const group of Object.values(groups)) {
-          if (group.items.length === 0) continue;
-          html += `<div class="download-group"><h3>${group.title}</h3><ul>`;
-          for (const item of group.items) {
-            html += `<li><a href="${item.url}"><span class="dl-icon">${item.icon}</span>${item.name}<span class="dl-platform">${item.platform}</span></a></li>`;
-          }
-          html += '</ul></div>';
-        }
-        html += '</div>';
-
-        if (assets.length === 0) {
-          html = '<p style="text-align:center;color:var(--text-dim);">No assets found in the latest release. Check <a href="https://github.com/' + REPO + '/releases" style="color:var(--accent-light);">GitHub Releases</a> directly.</p>';
-        }
-
-        container.innerHTML = html;
-      } catch (err) {
-        container.innerHTML = '<p style="text-align:center;color:var(--text-dim);">Could not load release info. <a href="https://github.com/' + REPO + '/releases" style="color:var(--accent-light);">View releases on GitHub</a></p>';
-        versionBadge.textContent = 'latest';
+      if (name.includes('vscode') && name.endsWith('.vsix')) {
+        groups.ide.items.push({ name: 'VS Code Extension', url, platform: '.vsix', icon: '\u{1F539}' });
+      } else if (name.includes('rider') && name.endsWith('.zip')) {
+        groups.ide.items.push({ name: 'JetBrains Rider Plugin', url, platform: '.zip', icon: '\u{1F538}' });
+      } else if (name.includes('visualstudio') && name.endsWith('.vsix')) {
+        groups.ide.items.push({ name: 'Visual Studio Extension', url, platform: '.vsix', icon: '\u{1F7E3}' });
+      } else if (name.startsWith('virtualpeerreview')) {
+        const platform = name.includes('.exe') ? 'Windows' : name.includes('macos') || name.includes('darwin') ? 'macOS' : 'Linux';
+        groups.tui.items.push({ name: 'virtualpeerreview', url, platform, icon: '\u2328' });
       }
     }
 
-    loadRelease();
-  </script>
+    let html = '<div class="download-groups">';
+    for (const group of Object.values(groups)) {
+      if (group.items.length === 0) continue;
+      html += `<div class="download-group"><h3>${group.title}</h3><ul>`;
+      for (const item of group.items) {
+        html += `<li><a href="${item.url}"><span>${item.icon}</span>${item.name}<span class="dl-platform">${item.platform}</span></a></li>`;
+      }
+      html += '</ul></div>';
+    }
+    html += '</div>';
 
+    if (assets.length === 0) {
+      html = `<p style="text-align:center;color:var(--text-secondary);">No assets yet. Check <a href="https://github.com/${REPO}/releases" style="color:var(--accent-hover);">GitHub Releases</a>.</p>`;
+    }
+
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = `<p style="text-align:center;color:var(--text-secondary);">Could not load releases. <a href="https://github.com/${REPO}/releases" style="color:var(--accent-hover);">View on GitHub</a></p>`;
+    versionBadge.textContent = 'latest';
+  }
+}
+
+loadRelease();
+</script>
 </body>
 </html>
