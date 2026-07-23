@@ -413,6 +413,13 @@ jobs:
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
 
+      - name: Install VSSDK component
+        shell: pwsh
+        run: |
+          $installerPath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe"
+          $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          & $installerPath modify --installPath "$vsPath" --add Microsoft.VisualStudio.Component.VSSDK --quiet --norestart --wait
+
       - name: Set version
         shell: pwsh
         run: |
