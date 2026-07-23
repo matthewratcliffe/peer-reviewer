@@ -27,12 +27,15 @@ jobs:
           - os: ubuntu-latest
             binary: review-notes-service
             platform: linux
+            pkg-target: node18-linux-x64
           - os: macos-latest
             binary: review-notes-service
             platform: macos
+            pkg-target: node18-macos-x64
           - os: windows-latest
             binary: review-notes-service.exe
             platform: windows
+            pkg-target: node18-win-x64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -44,9 +47,13 @@ jobs:
 
       - run: npm ci
 
-      - name: Build service binary
+      - name: Build CJS
         working-directory: packages/service
-        run: npm run package
+        run: npm run build:cjs
+
+      - name: Package binary
+        working-directory: packages/service
+        run: npx pkg dist-cjs/index.js --target ${{ matrix.pkg-target }} --output ../../dist-bin/${{ matrix.binary }}
 
       - uses: actions/upload-artifact@v4
         with:
