@@ -12,7 +12,7 @@ on:
         default: 'no'
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   JAVA_VERSION: '17'
   DOTNET_VERSION: '8.0.x'
 
@@ -44,12 +44,15 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run package --workspace packages/service
+      - name: Build service binary
+        working-directory: packages/service
+        run: npm run package
 
       - uses: actions/upload-artifact@v4
         with:
           name: service-binary-${{ matrix.platform }}
           path: dist-bin/${{ matrix.binary }}
+          if-no-files-found: error
 
   # ─────────────────────────────────────────────────────────────────────
   # VS Code Extension

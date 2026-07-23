@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init *)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(node -e \"console.log\\('ok'\\)\")",
+      "Bash(npx pkg *)",
+      "Bash(timeout 5 ./dist-bin/review-notes-service.exe)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(gradle -v)",
+      "Bash(java -version)",
+      "Bash(gradle build *)",
+      "Read(//c/Program Files/Java//**)",
+      "Read(//c/Program Files \\\\\\(x86\\\\\\)/**)",
+      "Bash(ls \"/d\")",
+      "Read(//c/Users/matt/.gradle/jdks/**)",
+      "Bash(JAVA_HOME=\"/c/Users/matt/.gradle/jdks/eclipse_adoptium-17-amd64-windows.2\" gradle build --console=plain)",
+      "Bash(jps -l)",
+      "Bash(taskkill //F //FI \"WINDOWTITLE eq *\" //IM java.exe)",
+      "Bash(gradle --stop)",
+      "Read(//c/Users/matt/.gradle/daemon/**)",
+      "Read(//c/Users/matt/.gradle/**)"
+    ]
+  }
+}
