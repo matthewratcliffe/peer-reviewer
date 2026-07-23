@@ -104,6 +104,10 @@ export class PeerReviewerWebviewProvider implements vscode.WebviewViewProvider {
         vscode.commands.executeCommand("peerReviewer.stopAnalysis");
         break;
       }
+      case "test-connection": {
+        vscode.commands.executeCommand("peerReviewer.testProvider");
+        break;
+      }
     }
   }
 
@@ -261,6 +265,7 @@ td.sev-cell { font-weight: bold; text-transform: uppercase; font-size: 10px; }
   <label><select id="filter-issue"><option value="all">All Issues</option></select></label>
   <label><select id="group-by"><option value="none">No Grouping</option><option value="severity">Group by Severity</option><option value="file">Group by File</option><option value="issue">Group by Issue</option></select></label>
   <button id="btn-detail" title="Toggle detail panel">Detail</button>
+  <button id="btn-test-connection" title="Test connection to the configured LLM provider">Test Connection</button>
   <div class="spacer"></div>
   <div class="logo"><a href="https://www.matthewratcliffe.com.au" title="matthewratcliffe.com.au">MR</a></div>
 </div>
@@ -305,6 +310,7 @@ td.sev-cell { font-weight: bold; text-transform: uppercase; font-size: 10px; }
   const btnProject = document.getElementById('btn-project');
   const btnStop = document.getElementById('btn-stop');
   const btnDetail = document.getElementById('btn-detail');
+  const btnTestConnection = document.getElementById('btn-test-connection');
   const filterSeverity = document.getElementById('filter-severity');
   const filterIssue = document.getElementById('filter-issue');
   const groupBy = document.getElementById('group-by');
@@ -320,6 +326,7 @@ td.sev-cell { font-weight: bold; text-transform: uppercase; font-size: 10px; }
   btnChanges.addEventListener('click', () => vscode.postMessage({ type: 'reanalyse-changes' }));
   btnProject.addEventListener('click', () => vscode.postMessage({ type: 'reanalyse-project' }));
   btnStop.addEventListener('click', () => vscode.postMessage({ type: 'stop-analysis' }));
+  btnTestConnection.addEventListener('click', () => vscode.postMessage({ type: 'test-connection' }));
   overlayStop.addEventListener('click', () => vscode.postMessage({ type: 'stop-analysis' }));
   btnDetail.addEventListener('click', () => {
     detailVisible = !detailVisible;

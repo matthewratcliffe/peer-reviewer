@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using Microsoft.VisualStudio.Shell;
 
 namespace PeerReviewer
@@ -9,6 +10,20 @@ namespace PeerReviewer
     [Guid("f6a7b8c9-d0e1-2f3a-4b5c-6d7e8f901234")]
     public class PeerReviewerOptionsPage : DialogPage
     {
+        private PeerReviewerOptionsControl _control;
+
+        protected override IWin32Window Window
+        {
+            get
+            {
+                if (_control == null)
+                {
+                    _control = new PeerReviewerOptionsControl(this);
+                }
+                return _control;
+            }
+        }
+
         [Category("Provider")]
         [DisplayName("Active Provider")]
         [Description("The LLM provider to use for code review (codex, llama-cpp, claude, opencode, kiro)")]
@@ -127,6 +142,8 @@ namespace PeerReviewer
             {
                 // Service not available; use current/default values
             }
+
+            _control?.RefreshGrid();
         }
 
         private void LoadFromConfig(PeerReviewerConfig config)
@@ -177,7 +194,7 @@ namespace PeerReviewer
             DebugLogging = config.DebugLogging;
         }
 
-        private PeerReviewerConfig BuildConfig()
+        internal PeerReviewerConfig BuildConfig()
         {
             return new PeerReviewerConfig
             {
