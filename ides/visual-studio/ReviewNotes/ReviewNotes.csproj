@@ -17,6 +17,7 @@
     <StartProgram>$(DevEnvDir)devenv.exe</StartProgram>
     <StartArguments>/rootsuffix Exp</StartArguments>
     <UseWPF>true</UseWPF>
+    <CreateVsixContainer>true</CreateVsixContainer>
   </PropertyGroup>
 
   <ItemGroup>
