@@ -80,15 +80,11 @@ jobs:
           if-no-files-found: error
 
   # ─────────────────────────────────────────────────────────────────────
-  # VS Code Extension
+  # Build VS Code Extension (always runs)
   # ─────────────────────────────────────────────────────────────────────
-  publish-vscode:
+  build-vscode:
     needs: build-service
-    if: github.event.inputs.publish_vscode == 'yes'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -128,6 +124,34 @@ jobs:
           name: vscode-vsix
           path: ides/vscode/review-notes.vsix
 
+  # ─────────────────────────────────────────────────────────────────────
+  # Publish VS Code Extension (only when selected)
+  # ─────────────────────────────────────────────────────────────────────
+  publish-vscode:
+    needs: build-vscode
+    if: github.event.inputs.publish_vscode == 'yes'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Download VSIX
+        uses: actions/download-artifact@v4
+        with:
+          name: vscode-vsix
+          path: ides/vscode
+
+      - name: Install dependencies
+        working-directory: ides/vscode
+        run: npm ci
+
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
@@ -137,7 +161,7 @@ jobs:
 
       - name: Publish to VS Code Marketplace
         working-directory: ides/vscode
-        run: npx @vscode/vsce publish --azure-credential
+        run: npx @vscode/vsce publish --packagePath review-notes.vsix --azure-credential
 
       - name: Publish to Open VSX Registry
         working-directory: ides/vscode
@@ -146,11 +170,10 @@ jobs:
         run: npx ovsx publish review-notes.vsix --pat "$OVSX_PAT"
 
   # ─────────────────────────────────────────────────────────────────────
-  # JetBrains Rider Plugin
+  # Build JetBrains Rider Plugin (always runs)
   # ─────────────────────────────────────────────────────────────────────
-  publish-rider:
+  build-rider:
     needs: build-service
-    if: github.event.inputs.publish_rider == 'yes'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -196,6 +219,28 @@ jobs:
           name: rider-plugin
           path: ${{ steps.find-zip.outputs.path }}
 
+  # ─────────────────────────────────────────────────────────────────────
+  # Publish JetBrains Rider Plugin (only when selected)
+  # ─────────────────────────────────────────────────────────────────────
+  publish-rider:
+    needs: build-rider
+    if: github.event.inputs.publish_rider == 'yes'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set version
+        working-directory: ides/rider
+        run: sed -i "s/^version = .*/version = \"${{ env.VERSION }}\"/" build.gradle.kts
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Publish to JetBrains Marketplace
         working-directory: ides/rider
         env:
@@ -204,11 +249,10 @@ jobs:
         run: gradle publishPlugin -PintellijPublishToken="${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}"
 
   # ─────────────────────────────────────────────────────────────────────
-  # Visual Studio Extension
+  # Build Visual Studio Extension (always runs)
   # ─────────────────────────────────────────────────────────────────────
-  publish-visual-studio:
+  build-visual-studio:
     needs: build-service
-    if: github.event.inputs.publish_vs == 'yes'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -254,11 +298,33 @@ jobs:
           echo "path=$($vsix.FullName)" >> $env:GITHUB_OUTPUT
           echo "name=$($vsix.Name)" >> $env:GITHUB_OUTPUT
 
-      - name: Upload unsigned VSIX
+      - name: Upload VSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-studio-vsix
+          path: ${{ steps.find-vsix.outputs.path }}
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Publish Visual Studio Extension (only when selected)
+  # ─────────────────────────────────────────────────────────────────────
+  publish-visual-studio:
+    needs: build-visual-studio
+    if: github.event.inputs.publish_vs == 'yes'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download VSIX
+        uses: actions/download-artifact@v4
+        with:
+          name: visual-studio-vsix
+          path: unsigned-vsix
+
+      - name: Upload for signing
         uses: actions/upload-artifact@v4
         with:
           name: visual-studio-vsix-unsigned
-          path: ${{ steps.find-vsix.outputs.path }}
+          path: unsigned-vsix/*.vsix
 
       - name: Sign VSIX with SignPath
         uses: signpath/github-action-submit-signing-request@v1
@@ -271,12 +337,6 @@ jobs:
           github-artifact-id: visual-studio-vsix-unsigned
           wait-for-completion: true
           output-artifact-directory: signed-vsix
-
-      - name: Upload signed VSIX
-        uses: actions/upload-artifact@v4
-        with:
-          name: visual-studio-vsix
-          path: signed-vsix/*.vsix
 
       - name: Publish to Visual Studio Marketplace
         shell: pwsh
@@ -297,11 +357,11 @@ jobs:
             -personalAccessToken $env:VS_MARKETPLACE_PAT
 
   # ─────────────────────────────────────────────────────────────────────
-  # Create GitHub Release with all artifacts
+  # Create GitHub Release with all built artifacts
   # ─────────────────────────────────────────────────────────────────────
   release:
     if: always() && !cancelled() && !failure()
-    needs: [publish-vscode, publish-rider, publish-visual-studio]
+    needs: [build-vscode, build-rider, build-visual-studio]
     runs-on: ubuntu-latest
     permissions:
       contents: write
