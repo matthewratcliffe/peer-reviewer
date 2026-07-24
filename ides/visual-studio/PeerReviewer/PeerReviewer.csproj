@@ -22,6 +22,7 @@
     <DeployExtension>false</DeployExtension>
     <DeployVSTemplates>false</DeployVSTemplates>
     <TemplateOutputDirectory>$(IntermediateOutputPath)templates</TemplateOutputDirectory>
+    <VSSDKBuildToolsAutoSetup>true</VSSDKBuildToolsAutoSetup>
   </PropertyGroup>
 
   <ItemGroup>
@@ -53,8 +54,5 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
-  <Import Project="$(PkgMicrosoft_VSSDK_BuildTools)\tools\vssdk\Microsoft.VsSDK.targets" />
-
 
 </Project>
