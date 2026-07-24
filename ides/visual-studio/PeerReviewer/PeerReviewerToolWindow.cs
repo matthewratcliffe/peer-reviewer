@@ -10,7 +10,15 @@ namespace PeerReviewer
         public PeerReviewerToolWindow() : base(null)
         {
             Caption = "Virtual Peer Review";
-            Content = new PeerReviewerControl();
+            try
+            {
+                Content = new PeerReviewerControl();
+            }
+            catch (Exception ex)
+            {
+                ActivityLog.LogError(nameof(PeerReviewerToolWindow), ex.ToString());
+                throw;
+            }
         }
     }
 }

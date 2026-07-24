@@ -20,7 +20,8 @@
       "Bash(taskkill //F //FI \"WINDOWTITLE eq *\" //IM java.exe)",
       "Bash(gradle --stop)",
       "Read(//c/Users/matt/.gradle/daemon/**)",
-      "Read(//c/Users/matt/.gradle/**)"
+      "Read(//c/Users/matt/.gradle/**)",
+      "Bash(xargs grep -l \"BaseCommand\\\\|MenuCommand\\\\|ToolWindowPane\\\\|VirtualPeerReview\")"
     ]
   }
 }
