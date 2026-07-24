@@ -1,5 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Controls;
 using Microsoft.VisualStudio.Shell;
 
 namespace PeerReviewer
@@ -17,7 +19,12 @@ namespace PeerReviewer
             catch (Exception ex)
             {
                 ActivityLog.LogError(nameof(PeerReviewerToolWindow), ex.ToString());
-                throw;
+                Content = new TextBlock
+                {
+                    Text = $"Virtual Peer Review failed to initialize:\n{ex.Message}",
+                    Margin = new Thickness(12),
+                    TextWrapping = TextWrapping.Wrap
+                };
             }
         }
     }

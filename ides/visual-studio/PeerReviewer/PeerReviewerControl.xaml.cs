@@ -42,7 +42,7 @@ namespace PeerReviewer
 
     public partial class PeerReviewerControl : UserControl
     {
-        private readonly IpcClient _client = new IpcClient();
+        private IpcClient _client;
         private string _repoRoot;
         private List<Finding> _allFindings = new List<Finding>();
         private readonly ObservableCollection<FindingDisplayRow> _displayRows = new ObservableCollection<FindingDisplayRow>();
@@ -58,6 +58,15 @@ namespace PeerReviewer
         public PeerReviewerControl()
         {
             InitializeComponent();
+            try
+            {
+                _client = new IpcClient();
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Failed to initialize IPC client: {ex.Message}");
+                _client = null;
+            }
             FindingsDataGrid.ItemsSource = _displayRows;
             _notesSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
             _notesSaveTimer.Tick += NotesSaveTimer_Tick;
@@ -85,6 +94,12 @@ namespace PeerReviewer
         {
             try
             {
+                if (_client == null)
+                {
+                    Dispatcher.Invoke(() => ShowError("IPC client is not available."));
+                    return;
+                }
+
                 var solutionPath = GetSolutionDirectory();
                 if (string.IsNullOrEmpty(solutionPath))
                     return;
@@ -119,7 +134,7 @@ namespace PeerReviewer
         {
             while (!token.IsCancellationRequested)
             {
-                if (!_analysisInProgress && !string.IsNullOrEmpty(_repoRoot))
+                if (!_analysisInProgress && !string.IsNullOrEmpty(_repoRoot) && _client != null)
                 {
                     try
                     {
@@ -142,7 +157,7 @@ namespace PeerReviewer
 
             while (!token.IsCancellationRequested)
             {
-                if (!string.IsNullOrEmpty(_repoRoot))
+                if (!string.IsNullOrEmpty(_repoRoot) && _client != null)
                 {
                     try
                     {
@@ -295,6 +310,12 @@ namespace PeerReviewer
 
         private async void RunAnalysis(AnalysisScope scope)
         {
+            if (_client == null)
+            {
+                ShowError("IPC client is not available. Cannot run analysis.");
+                return;
+            }
+
             if (string.IsNullOrEmpty(_repoRoot))
             {
                 ShowError("Not connected to peer-reviewer-service. Please wait and try again.");
@@ -338,6 +359,8 @@ namespace PeerReviewer
         {
             while (!token.IsCancellationRequested)
             {
+                if (_client == null) break;
+
                 try
                 {
                     var progress = await Task.Run(() => _client.GetAnalysisProgress(_repoRoot), token);
@@ -499,7 +522,7 @@ namespace PeerReviewer
 
         private void StopAnalysisButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(_repoRoot))
+            if (_client != null && !string.IsNullOrEmpty(_repoRoot))
             {
                 Task.Run(() =>
                 {
@@ -603,7 +626,7 @@ namespace PeerReviewer
         private async void DismissButton_Click(object sender, RoutedEventArgs e)
         {
             var finding = _currentFinding;
-            if (finding == null) return;
+            if (finding == null || _client == null) return;
 
             try
             {
