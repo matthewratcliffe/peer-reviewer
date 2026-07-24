@@ -433,7 +433,7 @@ jobs:
 
       - name: Build VSIX
         working-directory: ides/visual-studio
-        run: msbuild PeerReviewer.sln /p:Configuration=Release /p:DeployExtension=false /v:normal /bl:msbuild.binlog
+        run: msbuild PeerReviewer.sln /p:Configuration=Release /p:DeployExtension=false /v:diagnostic /bl:msbuild.binlog
 
       - name: Upload MSBuild binlog
         if: always()
