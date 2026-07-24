@@ -25,8 +25,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.8.2365" GeneratePathProperty="true" />
-    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.8.37222" />
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.9.820" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" />
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 

@@ -413,31 +413,6 @@ jobs:
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
 
-      - name: Install VSSDK component
-        shell: pwsh
-        run: |
-          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-          $installerPath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe"
-          $vsPath = & $vswhere -latest -property installationPath
-          Write-Host "VS installation path: $vsPath"
-
-          $before = & $vswhere -latest -requires Microsoft.VisualStudio.Component.VSSDK -property installationPath
-          Write-Host "VSSDK present before install: '$before'"
-
-          $proc = Start-Process -FilePath $installerPath -ArgumentList @(
-            "modify", "--installPath", "`"$vsPath`"",
-            "--add", "Microsoft.VisualStudio.Component.VSSDK",
-            "--quiet", "--norestart", "--wait"
-          ) -PassThru -Wait
-          Write-Host "vs_installer exit code: $($proc.ExitCode)"
-
-          $after = & $vswhere -latest -requires Microsoft.VisualStudio.Component.VSSDK -property installationPath
-          Write-Host "VSSDK present after install: '$after'"
-          if (-not $after) {
-            Write-Error "VSSDK component still not present after install attempt"
-            exit 1
-          }
-
       - name: Set version
         shell: pwsh
         run: |
