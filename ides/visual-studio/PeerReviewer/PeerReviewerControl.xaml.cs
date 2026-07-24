@@ -78,7 +78,7 @@ namespace PeerReviewer
         private async void OnLoaded(object sender, RoutedEventArgs e)
         {
             _pollCts = new CancellationTokenSource();
-            await Task.Run(() => InitializeConnection());
+            await InitializeConnectionAsync();
             StartPolling(_pollCts.Token);
             StartAutoAnalyseWatcher(_pollCts.Token);
         }
@@ -90,44 +90,44 @@ namespace PeerReviewer
             _autoAnalyseTimer?.Stop();
         }
 
-        private void InitializeConnection()
+        private async Task InitializeConnectionAsync()
         {
             try
             {
                 if (_client == null)
                 {
-                    Dispatcher.Invoke(() => ShowError("IPC client is not available."));
+                    ShowError("IPC client is not available.");
                     return;
                 }
 
-                var solutionPath = GetSolutionDirectory();
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                var solutionPath = GetSolutionDirectoryOnMainThread();
                 if (string.IsNullOrEmpty(solutionPath))
                     return;
 
-                _repoRoot = ServiceLauncher.EnsureRunningAndRegister(_client, solutionPath);
+                var client = _client;
+                _repoRoot = await Task.Run(() => ServiceLauncher.EnsureRunningAndRegister(client, solutionPath));
             }
             catch (Exception ex)
             {
-                Dispatcher.Invoke(() =>
-                {
-                    ShowError($"Failed to connect to peer-reviewer-service: {ex.Message}");
-                });
+                ShowError($"Failed to connect to peer-reviewer-service: {ex.Message}");
             }
         }
 
-        private string GetSolutionDirectory()
+        private string GetSolutionDirectoryOnMainThread()
         {
-            string path = null;
-            ThreadHelper.JoinableTaskFactory.Run(async () =>
+            ThreadHelper.ThrowIfNotOnUIThread();
+            try
             {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 var dte = Package.GetGlobalService(typeof(SDTE)) as DTE2;
-                if (dte?.Solution != null && !string.IsNullOrEmpty(dte.Solution.FullName))
-                {
-                    path = Path.GetDirectoryName(dte.Solution.FullName);
-                }
-            });
-            return path;
+                if (dte?.Solution == null || string.IsNullOrEmpty(dte.Solution.FullName))
+                    return null;
+                return Path.GetDirectoryName(dte.Solution.FullName);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private async void StartPolling(CancellationToken token)
@@ -178,7 +178,7 @@ namespace PeerReviewer
                                     {
                                         Interval = TimeSpan.FromMinutes(interval)
                                     };
-                                    _autoAnalyseTimer.Tick += (s, e) => RunAnalysis(AnalysisScope.Changes);
+                                    _autoAnalyseTimer.Tick += (s, ev) => RunAnalysis(AnalysisScope.Changes);
                                     _autoAnalyseTimer.Start();
                                 }
                             });

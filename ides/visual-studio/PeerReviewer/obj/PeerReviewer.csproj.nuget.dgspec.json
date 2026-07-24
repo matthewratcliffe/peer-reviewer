@@ -57,16 +57,16 @@
           "dependencies": {
             "Microsoft.VSSDK.BuildTools": {
               "target": "Package",
-              "version": "[17.8.2365, )",
+              "version": "[18.9.820, )",
               "generatePathProperty": true
             },
             "Microsoft.VisualStudio.SDK": {
               "target": "Package",
-              "version": "[17.8.37222, )"
+              "version": "[17.14.40265, )"
             },
             "System.Text.Json": {
               "target": "Package",
-              "version": "[8.0.5, )"
+              "version": "[9.0.0, )"
             }
           },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301\\RuntimeIdentifierGraph.json"
